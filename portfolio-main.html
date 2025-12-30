@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio - Project Gallery</title>
+    <link rel="stylesheet" href="portfolio-main.css">
+    <script src="https://kit.fontawesome.com/99f26788e2.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-percentage" id="loading-percentage">0%</div>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loading-bar"></div>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <a href="#" class="nav-link active" data-page="projects">Projects</a>
+        <a href="#" class="nav-link" data-page="about">About</a>
+    </nav>
+    
+    <!-- Projects Page -->
+    <div id="projects-page" class="page active">
+        <div id="image-track" data-mouse-down-at="0" data-prev-percentage="0">
+        <img class="image" src="https://images.unsplash.com/photo-1524781289445-ddf8f5695861?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80" draggable="false" />
+        <img class="image" src="https://images.unsplash.com/photo-1610194352361-4c81a6a8967e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1674&q=80" draggable="false" />
+        <img class="image" src="https://images.unsplash.com/photo-1618202133208-2907bebba9e1?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80" draggable="false" />
+        <img class="image" src="https://images.unsplash.com/photo-1495805442109-bf1cf975750b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80" draggable="false" />
+        <img class="image" src="https://images.unsplash.com/photo-1548021682-1720ed403a5b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80" draggable="false" />
+        <img class="image" src="https://images.unsplash.com/photo-1496753480864-3e588e0269b3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2134&q=80" draggable="false" />
+        <img class="image" src="https://images.unsplash.com/photo-1613346945084-35cccc812dd5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1759&q=80" draggable="false" />
+        <img class="image" src="https://images.unsplash.com/photo-1516681100942-77d8e7f9dd97?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80" draggable="false" />
+        </div>
+        <div class="counter" id="counter">
+            <span class="counter-number" id="current-number">1</span>
+            <span class="counter-separator"> - </span>
+            <span class="counter-number" id="total-number">8</span>
+        </div>
+    </div>
+    
+    <!-- About Page -->
+    <div id="about-page" class="page">
+        <div class="about-container">
+            <div class="about-image-container">
+                <img src="IMG_9118.jpeg" alt="Sunset landscape" class="about-image" />
+            </div>
+            <div class="about-content">
+                <div class="about-intro-wrapper">
+                    <p class="about-intro">Hi! I'm Anson, a CS undergrad at UW Seattle. I work on using data to understand all the weird problems out there.</p>
+                </div>
+                
+                <div class="about-icons-wrapper">
+                    <div class="about-icons">
+                    <a href="mailto:ac283@cs.washington.edu" class="icon-link" data-icon="Email">
+                        <div class="icon-circle">
+                            <i class="fa-regular fa-envelope"></i>
+                        </div>
+                    </a>
+                    <a href="https://drive.google.com/file/d/1tP_cUI74Guc1OTPCrBrJlfolOD5KfA8L/view?usp=sharing" target="_blank" class="icon-link" data-icon="Resume">
+                        <div class="icon-circle">
+                            <i class="fa-regular fa-file"></i>
+                        </div>
+                    </a>
+                    <a href="https://github.com/ansoncchen" target="_blank" class="icon-link" data-icon="Github">
+                        <div class="icon-circle">
+                            <i class="fa-brands fa-github"></i>
+                        </div>
+                    </a>
+                    <a href="https://www.linkedin.com/in/anson-chongan-chen/" target="_blank" class="icon-link" data-icon="Linkedin">
+                        <div class="icon-circle">
+                            <i class="fa-brands fa-linkedin-in"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="icon-link disabled" data-icon="Substack">
+                        <div class="icon-circle">
+                            <i class="fa-brands fa-blogger"></i>
+                        </div>
+                    </a>
+                    </div>
+                    <p class="about-hover-text" id="hover-text">Text that fades in and out based on what icon is being hovered over, clicking an icon opens a link</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="portfolio-main.js"></script>
+</body>
+</html>
