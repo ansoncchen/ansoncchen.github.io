@@ -166,6 +166,11 @@ const handleOnMove = e => {
 
 // Handle wheel events for trackpad/mouse wheel scrolling
 const handleWheel = e => {
+  // Allow normal scrolling on project detail page
+  if (document.body.classList.contains('project-detail-active')) {
+    return;
+  }
+  
   e.preventDefault();
   
   const now = performance.now();
@@ -548,12 +553,14 @@ const renderProjectPage = (project) => {
       const iconMap = {
         demo: 'fa-external-link',
         github: 'fa-brands fa-github',
-        website: 'fa-globe'
+        website: 'fa-globe',
+        poster: 'fa-file-pdf'
       };
       const labelMap = {
         demo: 'Demo',
         github: 'GitHub',
-        website: 'Website'
+        website: 'Website',
+        poster: 'Poster'
       };
       return `
         <a href="${value}" target="_blank" class="project-link" data-link="${key}">
@@ -703,6 +710,9 @@ const openProject = (projectId) => {
   // Transition to project detail page
   transitionToPage(projectsPage, projectDetailPage);
   
+  // Enable body scrolling for project detail page
+  document.body.classList.add('project-detail-active');
+  
   // Update URL without reload (optional, for better UX)
   if (history.pushState) {
     history.pushState({ projectId }, '', `#${projectId}`);
@@ -716,6 +726,9 @@ if (backButton) {
     
     // Clean up carousel
     cleanupCarousel();
+    
+    // Disable body scrolling when leaving project detail page
+    document.body.classList.remove('project-detail-active');
     
     transitionToPage(projectDetailPage, projectsPage);
     
@@ -733,6 +746,7 @@ window.addEventListener('popstate', (e) => {
   } else if (projectDetailPage.classList.contains('active')) {
     const projectsPage = document.getElementById('projects-page');
     cleanupCarousel();
+    document.body.classList.remove('project-detail-active');
     transitionToPage(projectDetailPage, projectsPage);
   }
 });

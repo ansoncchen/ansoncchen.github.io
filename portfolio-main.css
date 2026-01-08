@@ -10,6 +10,11 @@ body {
     -ms-user-select: none;
   }
   
+  body.project-detail-active {
+    overflow-y: auto;
+    height: auto;
+  }
+  
   /* Loading Screen */
   .loading-screen {
     position: fixed;
@@ -183,9 +188,17 @@ body {
   }
   
   /* Allow scrolling on project detail page */
+  #project-detail-page {
+    height: auto !important;
+    min-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
   #project-detail-page.active {
     overflow-y: auto;
     overflow-x: hidden;
+    height: auto !important;
   }
   
   /* Hide pages and nav initially until loading is complete */
@@ -413,6 +426,8 @@ body {
     gap: 4rem;
     align-items: center;
     justify-content: center;
+    margin: 0 auto;
+    margin-top: 8rem;
   }
   
   .project-image-container {
@@ -540,6 +555,8 @@ body {
     max-width: 1200px;
     padding: 0;
     padding-bottom: 2rem;
+    margin: 0 auto;
+    margin-top: 4rem;
   }
   
   .project-description-wrapper {
