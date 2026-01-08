@@ -30,6 +30,21 @@
     "technologies": ["React", "FastAPI", "Google Cloud", "Docker", "Plotly"]
   },
   {
+    "id": "datect-award",
+    "title": "DATect: Research Award",
+    "description": "Received the 2024 ISEF Grand Award and 2025 STS Scholar for my work on DATect",
+    "carouselImage": "isef award.png",
+    "images": [
+      "ISEF.png"
+    ],
+    "links": {
+      "demo": "https://isef.net/project/eaev057-forecasting-domoic-acid-in-the-pacific-northwest",
+      "github": "https://washacad.org/wp-content/uploads/2024/09/Anson-Cs-Poster-Anson-Chen.pdf",
+      "website": "https://www.nanoos.org/news/index.php?item=HabPredictionModelAward250226"
+    },
+    "technologies": []
+  }
+  {
     "id": "codegraph",
     "title": "CodeGraph",
     "description": "CodeGraph was a hackathon project (DubHacks 2025) that creates an AI-powered codebase knowledge graph for team collaboration. It's built as an Atlassian Forge app for Jira Cloud that allows users to paste a GitHub repository URL, analyzes the codebase and generates an interactive knowledge graph, visualizes relationships between code artifacts, people, and events (dependencies, reviews, authorship, etc.), and displays directly inside Jira project pages as an Obsidian-style graph interface.",
