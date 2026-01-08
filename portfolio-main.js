@@ -22,7 +22,7 @@ let velocity = 0;
 let lastWheelTime = 0;
 
 // Initialize counter display with odometer
-const initializeCounter = () => {
+const initializeCounter = (startNumber = 1) => {
   const createDigitWrapper = (number) => {
     const digits = [];
     const maxNum = Math.max(9, totalImages);
@@ -33,7 +33,7 @@ const initializeCounter = () => {
     return `<div class="digit-wrapper" style="transform: translateY(${-number * 1.2}em);">${digits.join('')}</div>`;
   };
   
-  currentNumberEl.innerHTML = createDigitWrapper(1);
+  currentNumberEl.innerHTML = createDigitWrapper(startNumber);
   totalNumberEl.innerHTML = `<div class="digit-wrapper"><div class="digit">${totalImages}</div></div>`;
 };
 
@@ -259,15 +259,23 @@ const loadProjects = async () => {
     // Re-initialize images reference
     images = track.getElementsByClassName("image");
     
-    // Initialize counter
-    initializeCounter();
+    // Start at the middle project
+    const middleIndex = Math.floor(totalImages / 2);
     
-    // Initialize percentage from dataset
-    currentPercentage = parseFloat(track.dataset.percentage || 0);
-    targetPercentage = currentPercentage;
+    // Initialize counter with middle project number (1-indexed)
+    initializeCounter(middleIndex + 1);
+    const startPercentage = totalImages > 1 ? -(middleIndex / (totalImages - 1)) * 100 : 0;
     
-    // Set initial project index to 0 (first project, displays as 1)
-    currentProjectIndex = 0;
+    currentPercentage = startPercentage;
+    targetPercentage = startPercentage;
+    track.dataset.percentage = startPercentage;
+    track.dataset.prevPercentage = startPercentage;
+    
+    // Set initial project index to middle
+    currentProjectIndex = middleIndex;
+    
+    // Apply initial transform
+    updateTransform();
     
     // Force initial counter update
     setTimeout(() => {
