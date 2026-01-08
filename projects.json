@@ -1,0 +1,48 @@
+[
+  {
+    "id": "datect-forecasts",
+    "title": "DATect: ML Algal Bloom Forecasts",
+    "description": "DATect is a machine learning system for forecasting domoic acid (DA) toxin concentrations from harmful algal blooms along the Pacific Coast that ingests 21 years of satellite oceanographic data (MODIS chlorophyll, SST, fluorescence), climate indices (PDO, ONI, BEUTI), streamflow, and ground-truth DA measurements across 10 Washington/Oregon monitoring sites; processes and aligns this data into weekly time series with built-in temporal safeguards (7-day satellite delay, 2-month climate reporting lag) to prevent data leakage; trains XGBoost models for either regression (continuous DA concentration) or classification (Low/Moderate/High/Extreme risk categories); and enforces strict chronological train/test splits with per-forecast category creation to ensure scientifically valid retrospective evaluation, achieving approximately 0.43 R² for regression and 78% accuracy for classification.",
+    "carouselImage": "domoic acid research.png",
+    "images": [
+      "domoic acid research.png"
+    ],
+    "links": {
+      "demo": "",
+      "github": "https://github.com/ansoncchen/DATect-Forecasting-Domoic-Acid",
+      "website": ""
+    },
+    "technologies": ["Python", "XGBoost", "Scikit-learn", "Pandas", "Hyperopt"]
+  },
+  {
+    "id": "datect-app",
+    "title": "DATect: Full-Stack Cloud Application",
+    "description": "DATect is a React + FastAPI web application for interactive domoic acid forecasting and oceanographic data visualization, featuring a dashboard with real-time single-site predictions (regression for continuous μg/g values or classification for Low/Moderate/High/Extreme risk levels) complete with bootstrap confidence intervals, XGBoost feature importance, and gradient uncertainty visualizations; a retrospective analysis mode that evaluates 500+ historical forecasts through actual vs. predicted scatter plots, time series comparisons, and comprehensive per-site/per-class metrics (R², MAE, F1, accuracy); a historical analysis page offering six visualization types including correlation heatmaps, Sobol sensitivity indices, DA vs. Pseudo-nitzschia comparisons, waterfall plots, spectral/frequency analysis, and an interactive Pacific Coast site map; and interactive Plotly.js charts with hover tooltips, downloadable exports, and site filtering, all presented within a responsive Tailwind CSS interface.",
+    "carouselImage": "domoic acid app.png",
+    "images": [
+      "domoic acid app.png"
+    ],
+    "links": {
+      "demo": "",
+      "github": "https://github.com/ansoncchen/DATect-Forecasting-Domoic-Acid",
+      "website": ""
+    },
+    "technologies": ["React", "FastAPI", "Google Cloud", "Docker", "Plotly"]
+  },
+  {
+    "id": "codegraph",
+    "title": "CodeGraph",
+    "description": "CodeGraph was a hackathon project (DubHacks 2025) that creates an AI-powered codebase knowledge graph for team collaboration. It's built as an Atlassian Forge app for Jira Cloud that allows users to paste a GitHub repository URL, analyzes the codebase and generates an interactive knowledge graph, visualizes relationships between code artifacts, people, and events (dependencies, reviews, authorship, etc.), and displays directly inside Jira project pages as an Obsidian-style graph interface.",
+    "carouselImage": "code graph.png",
+    "images": [
+      "code graph.png"
+    ],
+    "links": {
+      "demo": "https://devpost.com/software/directedacycliccodebase",
+      "github": "https://github.com/CosmicOdyssey/DubHacks-2025/",
+      "website": ""
+    },
+    "technologies": ["React", "Atlassian Forge", "GeminiAPI", "Cytoscape.js", "Vite", "Node.js", "MCP"]
+  }
+]
+

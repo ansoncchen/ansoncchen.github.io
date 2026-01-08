@@ -7,8 +7,11 @@ const track = document.getElementById("image-track");
 const counter = document.getElementById("counter");
 const currentNumberEl = document.getElementById("current-number");
 const totalNumberEl = document.getElementById("total-number");
-const images = track.getElementsByClassName("image");
-const totalImages = images.length;
+
+// Project data storage
+let projectsData = [];
+let images = [];
+let totalImages = 0;
 
 let currentProjectIndex = 0;
 let currentPercentage = 0;
@@ -54,6 +57,12 @@ let counterUpdateFrame = null;
 const updateCounter = () => {
   // Throttle counter updates to avoid excessive calculations
   if (counterUpdateFrame) return;
+  
+  // Safety check: ensure images are loaded
+  if (!images || images.length === 0) {
+    images = track.getElementsByClassName("image");
+    if (!images || images.length === 0) return;
+  }
   
   counterUpdateFrame = requestAnimationFrame(() => {
     const screenCenter = window.innerWidth / 2;
@@ -112,11 +121,11 @@ const updateTransform = () => {
 const animate = () => {
   if (!isAnimating) return;
   
-  // Smooth interpolation with easing (spring-like)
+  // Smooth interpolation with easing (spring-like) - enhanced for buttery smooth feel
   const diff = targetPercentage - currentPercentage;
-  const ease = 0.15; // Spring-like easing for buttery smooth feel
+  const ease = 0.12; // Slightly slower easing for smoother feel
   
-  if (Math.abs(diff) < 0.01) {
+  if (Math.abs(diff) < 0.005) {
     currentPercentage = targetPercentage;
     isAnimating = false;
     updateTransform();
@@ -165,7 +174,7 @@ const handleWheel = e => {
   
   // Get scroll delta (handles both trackpad and mouse wheel)
   const deltaX = e.deltaX || e.deltaY || 0;
-  const scrollSensitivity = 0.25; // Adjust for scroll speed
+  const scrollSensitivity = 0.45; // Adjust for scroll speed (increased for faster navigation)
   
   // Calculate velocity for momentum
   if (timeDelta > 0 && timeDelta < 100) {
@@ -232,17 +241,82 @@ window.ontouchmove = e => handleOnMove(e.touches[0]);
 // Add wheel event for trackpad/mouse wheel scrolling
 window.addEventListener('wheel', handleWheel, { passive: false });
 
+// Load projects data and initialize carousel
+const loadProjects = async () => {
+  try {
+    const response = await fetch('projects.json');
+    projectsData = await response.json();
+    totalImages = projectsData.length;
+    
+    // Generate carousel images
+    generateCarousel();
+    
+    // Re-initialize images reference
+    images = track.getElementsByClassName("image");
+    
+    // Initialize counter
+    initializeCounter();
+    
+    // Initialize percentage from dataset
+    currentPercentage = parseFloat(track.dataset.percentage || 0);
+    targetPercentage = currentPercentage;
+    
+    // Set initial project index to 0 (first project, displays as 1)
+    currentProjectIndex = 0;
+    
+    // Force initial counter update
+    setTimeout(() => {
+      updateCounter();
+    }, 100);
+  } catch (error) {
+    console.error('Error loading projects:', error);
+  }
+};
+
+// Generate carousel images from projects data
+const generateCarousel = () => {
+  track.innerHTML = ''; // Clear existing images
+  
+  projectsData.forEach((project, index) => {
+    const img = document.createElement('img');
+    img.className = 'image';
+    img.src = project.carouselImage;
+    img.draggable = false;
+    img.dataset.projectId = project.id;
+    img.dataset.projectIndex = index;
+    img.style.cursor = 'pointer';
+    
+    let mouseDownTime = 0;
+    let mouseDownX = 0;
+    let mouseDownY = 0;
+    
+    // Handle mouse down to detect if it's a click or drag
+    img.addEventListener('mousedown', (e) => {
+      mouseDownTime = Date.now();
+      mouseDownX = e.clientX;
+      mouseDownY = e.clientY;
+    });
+    
+    // Add click handler - only trigger if it's a click, not a drag
+    img.addEventListener('click', (e) => {
+      const mouseUpTime = Date.now();
+      const timeDiff = mouseUpTime - mouseDownTime;
+      const moveX = Math.abs(e.clientX - mouseDownX);
+      const moveY = Math.abs(e.clientY - mouseDownY);
+      
+      // Only open project if it was a quick click (not a drag)
+      if (timeDiff < 200 && moveX < 5 && moveY < 5) {
+        e.stopPropagation();
+        openProject(project.id);
+      }
+    });
+    
+    track.appendChild(img);
+  });
+};
+
 // Initialize counter on load
-initializeCounter();
-// Initialize percentage from dataset
-currentPercentage = parseFloat(track.dataset.percentage || 0);
-targetPercentage = currentPercentage;
-// Set initial project index to 0 (first project, displays as 1)
-currentProjectIndex = 0;
-// Force initial counter update to ensure it shows 1-8
-setTimeout(() => {
-  updateCounter();
-}, 100);
+loadProjects();
 
 // Update counter on window resize
 window.addEventListener('resize', updateCounter);
@@ -365,3 +439,300 @@ if (hoverText && iconLinks.length > 0) {
     }
   });
 }
+
+// Project detail page functionality
+const projectContainer = document.getElementById('project-container');
+const projectDetailPage = document.getElementById('project-detail-page');
+const backButton = document.getElementById('back-button');
+
+// Smooth page transition function
+const transitionToPage = (fromPage, toPage, callback) => {
+  // Add transition class to allow animations
+  pages.forEach(page => page.classList.add('page-transitioning'));
+  
+  // Fade out current page
+  fromPage.classList.remove('active');
+  
+  // Wait for fade out to start, then fade in new page
+  setTimeout(() => {
+    toPage.classList.add('active');
+    
+    // Execute callback if provided
+    if (callback) {
+      callback();
+    }
+    
+    // Remove transition class after animation completes
+    setTimeout(() => {
+      pages.forEach(p => p.classList.remove('page-transitioning'));
+    }, 700);
+  }, 50);
+};
+
+// Simple markdown parser for descriptions
+const parseMarkdown = (text) => {
+  if (!text) return '';
+  
+  // Split into paragraphs (double newlines)
+  const paragraphs = text.split(/\n\n+/);
+  
+  return paragraphs.map(para => {
+    let processed = para.trim();
+    if (!processed) return '';
+    
+    // Check for headings (h1 to h4)
+    if (processed.startsWith('#### ')) {
+      return `<h4 class="md-h4">${processed.slice(5)}</h4>`;
+    }
+    if (processed.startsWith('### ')) {
+      return `<h3 class="md-h3">${processed.slice(4)}</h3>`;
+    }
+    if (processed.startsWith('## ')) {
+      return `<h2 class="md-h2">${processed.slice(3)}</h2>`;
+    }
+    if (processed.startsWith('# ')) {
+      return `<h1 class="md-h1">${processed.slice(2)}</h1>`;
+    }
+    
+    // Process inline formatting
+    // Bold: **text** or __text__
+    processed = processed.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    processed = processed.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    
+    // Italic: *text* or _text_
+    processed = processed.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    processed = processed.replace(/_(.+?)_/g, '<em>$1</em>');
+    
+    // Inline code: `code`
+    processed = processed.replace(/`(.+?)`/g, '<code class="md-code">$1</code>');
+    
+    // Links: [text](url)
+    processed = processed.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" class="md-link">$1</a>');
+    
+    // Convert single newlines to <br> within paragraphs
+    processed = processed.replace(/\n/g, '<br>');
+    
+    return `<p class="project-description">${processed}</p>`;
+  }).filter(p => p).join('');
+};
+
+// Render project detail page
+const renderProjectPage = (project) => {
+  if (!project) return;
+  
+  // Create project images gallery with carousel navigation
+  const imagesHTML = project.images.map((img, index) => 
+    `<img src="${img}" alt="${project.title}" class="project-image ${index === 0 ? 'active' : ''}" data-index="${index}" />`
+  ).join('');
+  
+  const carouselNavHTML = project.images.length > 1 ? `
+    <div class="carousel-nav">
+      <button class="carousel-btn carousel-prev" aria-label="Previous image">
+        <i class="fa-solid fa-chevron-left"></i>
+      </button>
+      <div class="carousel-dots">
+        ${project.images.map((_, index) => 
+          `<span class="carousel-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></span>`
+        ).join('')}
+      </div>
+      <button class="carousel-btn carousel-next" aria-label="Next image">
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+    </div>
+  ` : '';
+  
+  // Create links HTML
+  const linksHTML = Object.entries(project.links)
+    .filter(([key, value]) => value && value.trim() !== '')
+    .map(([key, value]) => {
+      const iconMap = {
+        demo: 'fa-external-link',
+        github: 'fa-brands fa-github',
+        website: 'fa-globe'
+      };
+      const labelMap = {
+        demo: 'Demo',
+        github: 'GitHub',
+        website: 'Website'
+      };
+      return `
+        <a href="${value}" target="_blank" class="project-link" data-link="${key}">
+          <div class="icon-circle">
+            <i class="fa-solid ${iconMap[key] || 'fa-link'}"></i>
+          </div>
+          <span>${labelMap[key] || key}</span>
+        </a>
+      `;
+    }).join('');
+  
+  // Create technologies HTML
+  const technologiesHTML = project.technologies && project.technologies.length > 0
+    ? `<div class="project-technologies">
+         <p class="project-technologies-label">Technologies:</p>
+         <div class="project-technologies-list">
+           ${project.technologies.map(tech => `<span class="tech-tag">${tech}</span>`).join('')}
+         </div>
+       </div>`
+    : '';
+  
+  // Parse description with markdown support
+  const descriptionHTML = parseMarkdown(project.description);
+  
+  // Build project page HTML with new layout:
+  // Top row: Images | Title + Technologies + Links
+  // Bottom row: Description (full width)
+  projectContainer.innerHTML = `
+    <div class="project-top-section">
+      <div class="project-image-container">
+        <div class="project-images-gallery">
+          ${imagesHTML}
+        </div>
+        ${carouselNavHTML}
+      </div>
+      <div class="project-content">
+        <h1 class="project-title">${project.title}</h1>
+        ${technologiesHTML}
+        ${linksHTML ? `<div class="project-links-wrapper">
+          <div class="project-links">
+            ${linksHTML}
+          </div>
+        </div>` : ''}
+      </div>
+    </div>
+    <div class="project-description-section">
+      <div class="project-description-wrapper">
+        ${descriptionHTML}
+      </div>
+    </div>
+  `;
+  
+  // Initialize carousel if multiple images
+  if (project.images.length > 1) {
+    initializeCarousel();
+  }
+};
+
+// Image carousel functionality
+let currentImageIndex = 0;
+let carouselInterval = null;
+
+const initializeCarousel = () => {
+  const images = projectContainer.querySelectorAll('.project-image');
+  const dots = projectContainer.querySelectorAll('.carousel-dot');
+  const prevBtn = projectContainer.querySelector('.carousel-prev');
+  const nextBtn = projectContainer.querySelector('.carousel-next');
+  
+  if (!images.length) return;
+  
+  currentImageIndex = 0;
+  
+  const showImage = (index) => {
+    // Wrap around
+    if (index >= images.length) index = 0;
+    if (index < 0) index = images.length - 1;
+    
+    currentImageIndex = index;
+    
+    images.forEach((img, i) => {
+      img.classList.toggle('active', i === index);
+    });
+    
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === index);
+    });
+  };
+  
+  // Button handlers
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      showImage(currentImageIndex - 1);
+      resetAutoAdvance();
+    });
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      showImage(currentImageIndex + 1);
+      resetAutoAdvance();
+    });
+  }
+  
+  // Dot handlers
+  dots.forEach((dot, index) => {
+    dot.addEventListener('click', () => {
+      showImage(index);
+      resetAutoAdvance();
+    });
+  });
+  
+  // Auto-advance carousel (faster interval)
+  const startAutoAdvance = () => {
+    carouselInterval = setInterval(() => {
+      showImage(currentImageIndex + 1);
+    }, 4000); // 4 seconds per image
+  };
+  
+  const resetAutoAdvance = () => {
+    if (carouselInterval) {
+      clearInterval(carouselInterval);
+    }
+    startAutoAdvance();
+  };
+  
+  startAutoAdvance();
+};
+
+// Clean up carousel interval when leaving project page
+const cleanupCarousel = () => {
+  if (carouselInterval) {
+    clearInterval(carouselInterval);
+    carouselInterval = null;
+  }
+};
+
+// Open project detail page
+const openProject = (projectId) => {
+  const project = projectsData.find(p => p.id === projectId);
+  if (!project) return;
+  
+  const projectsPage = document.getElementById('projects-page');
+  
+  // Render project page
+  renderProjectPage(project);
+  
+  // Transition to project detail page
+  transitionToPage(projectsPage, projectDetailPage);
+  
+  // Update URL without reload (optional, for better UX)
+  if (history.pushState) {
+    history.pushState({ projectId }, '', `#${projectId}`);
+  }
+};
+
+// Back button handler
+if (backButton) {
+  backButton.addEventListener('click', () => {
+    const projectsPage = document.getElementById('projects-page');
+    
+    // Clean up carousel
+    cleanupCarousel();
+    
+    transitionToPage(projectDetailPage, projectsPage);
+    
+    // Update URL
+    if (history.pushState) {
+      history.pushState(null, '', window.location.pathname);
+    }
+  });
+}
+
+// Handle browser back/forward buttons
+window.addEventListener('popstate', (e) => {
+  if (e.state && e.state.projectId) {
+    openProject(e.state.projectId);
+  } else if (projectDetailPage.classList.contains('active')) {
+    const projectsPage = document.getElementById('projects-page');
+    cleanupCarousel();
+    transitionToPage(projectDetailPage, projectsPage);
+  }
+});

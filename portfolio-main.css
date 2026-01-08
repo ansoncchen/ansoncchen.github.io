@@ -100,6 +100,8 @@ body {
     transform: translate3d(0%, -50%, 0);
     will-change: transform;
     user-select: none; /* -- Prevent image highlighting -- */
+    backface-visibility: hidden;
+    perspective: 1000px;
   }
   
   #image-track > .image {
@@ -107,7 +109,13 @@ body {
     height: 56vmin;
     object-fit: cover;
     object-position: 100% center;
-    will-change: object-position;
+    will-change: object-position, transform;
+    backface-visibility: hidden;
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  
+  #image-track > .image:hover {
+    transform: scale(1.05);
   }
   
   .counter {
@@ -135,6 +143,8 @@ body {
     display: flex;
     flex-direction: column;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    backface-visibility: hidden;
   }
   
   .counter-number .digit {
@@ -155,19 +165,27 @@ body {
     height: 100vh;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(15px);
+    transform: translate3d(0, 15px, 0);
     transition: opacity 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
                 visibility 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                 transform 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     pointer-events: none;
     will-change: opacity, transform;
+    backface-visibility: hidden;
+    perspective: 1000px;
   }
   
   .page.active {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
     pointer-events: all;
+  }
+  
+  /* Allow scrolling on project detail page */
+  #project-detail-page.active {
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   
   /* Hide pages and nav initially until loading is complete */
@@ -276,6 +294,8 @@ body {
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease;
     position: relative;
     overflow: hidden;
+    will-change: transform;
+    backface-visibility: hidden;
   }
   
   .icon-link:hover .icon-circle {
@@ -318,16 +338,483 @@ body {
     min-height: 1.5em;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s, transform 0.3s ease;
-    transform: translateY(-5px);
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s, transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: translate3d(0, -5px, 0);
     letter-spacing: 0.05em;
     text-transform: uppercase;
     font-size: 0.85rem;
+    will-change: opacity, transform;
+    backface-visibility: hidden;
   }
   
   .about-hover-text.active {
     opacity: 0.7;
     visibility: visible;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
+  }
+  
+  /* Project Detail Page Styles */
+  .back-button {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    color: #fff;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 10;
+    will-change: transform, border-color;
+    backface-visibility: hidden;
+  }
+  
+  .back-button:hover {
+    border-color: rgba(255, 255, 255, 1);
+    transform: translate3d(-5px, 0, 0);
+  }
+  
+  .back-button i {
+    font-size: 0.9rem;
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  
+  .back-button:hover i {
+    transform: translate3d(-3px, 0, 0);
+  }
+  
+  .project-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    padding: 6rem 4rem 4rem;
+    box-sizing: border-box;
+    gap: 3rem;
+    align-items: center;
+    justify-content: flex-start;
+  }
+  
+  .project-top-section {
+    display: flex;
+    width: 100%;
+    max-width: 1200px;
+    gap: 4rem;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .project-image-container {
+    flex: 0 0 auto;
+    max-width: 600px;
+    overflow: hidden;
+    background-color: #000;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  
+  .project-images-gallery {
+    width: auto;
+    height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .project-image {
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: none;
+    border-radius: 4px;
+    transition: opacity 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: opacity;
+    backface-visibility: hidden;
+  }
+  
+  .project-image.active {
+    display: block;
+  }
+  
+  /* Carousel Navigation */
+  .carousel-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .carousel-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    font-size: 0.75rem;
+  }
+  
+  .carousel-btn:hover {
+    border-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+  
+  .carousel-dots {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+  .carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .carousel-dot:hover {
+    background-color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .carousel-dot.active {
+    background-color: #fff;
+    transform: scale(1.2);
+  }
+  
+  .project-content {
+    flex: 0 0 auto;
+    max-width: 450px;
+    background-color: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0;
+    gap: 2rem;
+  }
+  
+  .project-title {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    color: #fff;
+    font-size: 1.75rem;
+    line-height: 1.4;
+    text-align: left;
+    margin: 0;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+  
+  /* Description section - full width below image + content */
+  .project-description-section {
+    width: 100%;
+    max-width: 1200px;
+    padding: 0;
+    padding-bottom: 2rem;
+  }
+  
+  .project-description-wrapper {
+    width: 100%;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 2rem;
+  }
+  
+  .project-description {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1.9;
+    text-align: left;
+    max-width: 100%;
+    opacity: 0.85;
+    letter-spacing: 0.01em;
+    margin: 0 0 1.25rem 0;
+  }
+  
+  .project-description:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Markdown styling */
+  .md-h1, .md-h2, .md-h3, .md-h4 {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    color: #fff;
+    margin: 0 0 1rem 0;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  
+  .md-h1 {
+    font-size: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .md-h2 {
+    font-size: 1.25rem;
+    margin-top: 1.25rem;
+    opacity: 0.95;
+  }
+  
+  .md-h3 {
+    font-size: 1.1rem;
+    margin-top: 1rem;
+    opacity: 0.9;
+  }
+  
+  .md-h4 {
+    font-size: 1rem;
+    margin-top: 0.75rem;
+    opacity: 0.85;
+  }
+  
+  .md-code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+  
+  .md-link {
+    color: #fff;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+  }
+  
+  .md-link:hover {
+    opacity: 1;
+  }
+  
+  .project-description strong {
+    font-weight: 600;
+    color: #fff;
+  }
+  
+  .project-description em {
+    font-style: italic;
+  }
+  
+  .project-technologies {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .project-technologies-label {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    color: #fff;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+    margin: 0;
+  }
+  
+  .project-technologies-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .tech-tag {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    color: #fff;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    background-color: transparent;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform, border-color;
+    backface-visibility: hidden;
+  }
+  
+  .tech-tag:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translate3d(0, -2px, 0);
+  }
+  
+  .project-links-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+  }
+  
+  .project-links {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  
+  .project-link {
+    text-decoration: none;
+    color: #fff;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  
+  .project-link:hover {
+    transform: translate3d(0, -3px, 0);
+  }
+  
+  .project-link .icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background-color: transparent;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+  
+  .project-link:hover .icon-circle {
+    border-color: rgba(255, 255, 255, 1);
+  }
+  
+  .project-link .icon-circle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .project-link:hover .icon-circle::before {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .project-link:hover .icon-circle {
+    transform: scale(1.15);
+  }
+  
+  .project-link span {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  .project-link:hover span {
+    opacity: 1;
+  }
+  
+  /* Responsive adjustments for project pages */
+  @media (max-width: 1024px) {
+    .project-container {
+      padding: 5rem 2rem 2rem;
+      gap: 2rem;
+    }
+    
+    .project-top-section {
+      flex-direction: column;
+      gap: 2rem;
+    }
+    
+    .project-image-container,
+    .project-content {
+      flex: 1 1 auto;
+      max-width: 100%;
+    }
+    
+    .project-images-gallery {
+      height: 280px;
+    }
+    
+    .project-title {
+      font-size: 1.5rem;
+    }
+    
+    .project-description {
+      font-size: 0.95rem;
+    }
+    
+    .back-button {
+      top: 1rem;
+      left: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .project-container {
+      padding: 4.5rem 1.5rem 1.5rem;
+    }
+    
+    .project-images-gallery {
+      height: 220px;
+    }
+    
+    .project-title {
+      font-size: 1.25rem;
+    }
+    
+    .project-description {
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+    
+    .carousel-nav {
+      padding: 0.5rem;
+      gap: 0.75rem;
+    }
+    
+    .carousel-btn {
+      width: 28px;
+      height: 28px;
+    }
   }
   
