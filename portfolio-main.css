@@ -43,29 +43,36 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2rem;
+    gap: 1rem;
   }
   
+  .clam-ascii {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.5rem;
+    line-height: 1.15;
+    white-space: pre;
+    margin: 0;
+    letter-spacing: 0;
+  }
+
+  @media (min-width: 640px) {
+    .clam-ascii {
+      font-size: 0.7rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .clam-ascii {
+      font-size: 0.85rem;
+    }
+  }
+
   .loading-percentage {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
-    font-size: 2rem;
-    letter-spacing: 0.1em;
-  }
-  
-  .loading-bar-container {
-    width: 300px;
-    height: 2px;
-    background-color: rgba(255, 255, 255, 0.2);
-    overflow: hidden;
-    position: relative;
-  }
-  
-  .loading-bar {
-    height: 100%;
-    background-color: #fff;
-    width: 0%;
-    transition: width 0.1s linear;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
   }
   
   

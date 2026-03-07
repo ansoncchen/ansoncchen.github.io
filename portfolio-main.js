@@ -1,7 +1,7 @@
 // Loading screen
 const loadingScreen = document.getElementById("loading-screen");
 const loadingPercentage = document.getElementById("loading-percentage");
-const loadingBar = document.getElementById("loading-bar");
+const clamAscii = document.getElementById("clam-ascii");
 
 const track = document.getElementById("image-track");
 const counter = document.getElementById("counter");
@@ -334,32 +334,214 @@ loadProjects();
 // Update counter on window resize
 window.addEventListener('resize', updateCounter);
 
-// Loading screen animation
+// Scallop shell: starts as one shell, folds open to reveal both, folds back
 const initLoadingScreen = () => {
   let progress = 0;
-  const duration = 2000; // 2 seconds total
+  const duration = 5000;
   const startTime = Date.now();
-  
-  const updateLoading = () => {
+
+  const W = 60, H = 28;
+  const CX = W / 2;
+  const ASPECT = 2.2;
+  const MAX_R = 13;
+  const FAN_HALF = 1.2;
+  const NUM_RIBS = 15;
+  const RIB_W = 0.035;
+  const BUMP_AMP = 0.16;
+  const BUMP_FREQ = Math.PI * (NUM_RIBS - 1) / FAN_HALF;
+  const RIB_STEP = 2 * FAN_HALF / (NUM_RIBS - 1);
+
+  // Each phase: top shell compresses while bottom shell grows from nothing
+  const phases = [
+    { topH: 22, topVS: 1.00, botH: 0,  botVS: 0    },
+    { topH: 20, topVS: 0.78, botH: 22, botVS: 0.22 },
+    { topH: 18, topVS: 0.60, botH: 21, botVS: 0.40 },
+    { topH: 16, topVS: 0.48, botH: 20, botVS: 0.55 },
+    { topH: 14, topVS: 0.38, botH: 19, botVS: 0.70 },
+    { topH: 12, topVS: 0.30, botH: 18, botVS: 0.85 },
+    { topH: 10, topVS: 0.25, botH: 16, botVS: 1.00 },
+  ];
+
+  function drawFan(c, hingeRow, vScale, flip) {
+    if (vScale <= 0) return;
+    for (let row = 0; row < H - 2; row++) {
+      for (let col = 0; col < W; col++) {
+        const wx = (col - CX) / ASPECT;
+        const dd = flip ? (row - hingeRow) : (hingeRow - row);
+        if (dd < 0) continue;
+        const wy = dd / vScale;
+        const r = Math.sqrt(wx * wx + wy * wy);
+        if (r < 0.3) continue;
+        const theta = Math.atan2(wx, wy);
+        if (Math.abs(theta) > FAN_HALF) continue;
+        const eR = MAX_R * (1 + BUMP_AMP * Math.cos(BUMP_FREQ * theta));
+        if (r > eR) continue;
+
+        const ribW = Math.max(RIB_W, 0.15 / Math.max(r, 0.5));
+        let md = 99, nr = 0;
+        for (let i = 0; i < NUM_RIBS; i++) {
+          const ra = -FAN_HALF + i * RIB_STEP;
+          const d = Math.abs(theta - ra);
+          if (d < md) { md = d; nr = ra; }
+        }
+
+        let ch;
+        if (r > eR - 0.9) {
+          ch = '*';
+        } else if (r < 1.2) {
+          ch = '#';
+        } else if (md < ribW) {
+          if (Math.abs(nr) < 0.18) ch = '|';
+          else if (nr > 0) ch = flip ? '\\' : '/';
+          else ch = flip ? '/' : '\\';
+        } else if (md < ribW * 2.2) {
+          ch = ':';
+        } else {
+          ch = '.';
+        }
+        c[row][col] = ch;
+      }
+    }
+  }
+
+  function buildFrame(gap, shimmer) {
+    const c = [];
+    for (let y = 0; y < H; y++) c.push(new Array(W).fill(' '));
+    const ph = phases[gap];
+
+    drawFan(c, ph.topH, ph.topVS, false);
+
+    // Hinge line + ears for the top shell
+    for (let col = CX - 5; col <= CX + 5; col++) {
+      if (col >= 0 && col < W) c[ph.topH][col] = '=';
+    }
+    for (let side = -1; side <= 1; side += 2) {
+      for (let dx = 0; dx < 4; dx++) {
+        const col = CX + side * (6 + dx);
+        if (col >= 0 && col < W && c[ph.topH][col] === ' ')
+          c[ph.topH][col] = '-';
+        if (col >= 0 && col < W && ph.topH - 1 >= 0 && c[ph.topH - 1][col] === ' ')
+          c[ph.topH - 1][col] = dx < 3 ? '.' : ' ';
+      }
+    }
+
+    if (gap > 0 && ph.botVS > 0) {
+      drawFan(c, ph.botH, ph.botVS, true);
+
+      // Hinge line for bottom shell
+      for (let col = CX - 5; col <= CX + 5; col++) {
+        if (col >= 0 && col < W && c[ph.botH][col] === ' ')
+          c[ph.botH][col] = '=';
+      }
+
+      // Ligament connecting the two shells at the sides
+      for (let row = ph.topH; row <= ph.botH; row++) {
+        if (c[row][CX - 4] === ' ') c[row][CX - 4] = '|';
+        if (c[row][CX + 4] === ' ') c[row][CX + 4] = '|';
+      }
+    }
+
+    // Pearl centered in the gap
+    if (gap >= 3) {
+      const pr = Math.round((ph.topH + ph.botH) / 2);
+      const pl = shimmer ? '(*)' : '(@)';
+      for (let i = 0; i < 3; i++) {
+        const cc = CX - 1 + i;
+        if (pr >= 0 && pr < H && cc >= 0 && cc < W && c[pr][cc] === ' ')
+          c[pr][cc] = pl[i];
+      }
+    }
+
+    // Sand floor
+    const s1 = '~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~';
+    const s2 = '.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.~~.~.';
+    for (let col = 3; col < W - 3; col++) {
+      c[H - 2][col] = s1[col % s1.length];
+      c[H - 1][col] = s2[col % s2.length];
+    }
+    return c;
+  }
+
+  const frames = {};
+  for (let g = 0; g <= 6; g++) {
+    frames[g] = buildFrame(g, false);
+    if (g >= 4) frames[g + 's'] = buildFrame(g, true);
+  }
+
+  let bubbles = [];
+  const bChars = ['.', 'o', 'O', 'o', '.'];
+
+  function spawnBubble(gap) {
+    if (gap < 3) return;
+    const ph = phases[gap];
+    for (let i = 0, n = gap >= 5 ? 3 : 2; i < n; i++) {
+      if (Math.random() > 0.45) continue;
+      bubbles.push({
+        x: CX - 4 + Math.random() * 8,
+        y: Math.round((ph.topH + ph.botH) / 2),
+        vy: -(0.2 + Math.random() * 0.3),
+        ph: Math.random() * Math.PI * 2,
+        ch: bChars[Math.floor(Math.random() * bChars.length)],
+      });
+    }
+  }
+
+  function updateBubbles() {
+    for (const b of bubbles) {
+      b.y += b.vy;
+      b.x += Math.sin(b.y * 0.5 + b.ph) * 0.12;
+    }
+    bubbles = bubbles.filter(b => b.y > 0);
+  }
+
+  function render(frame) {
+    const out = frame.map(r => [...r]);
+    for (const b of bubbles) {
+      const bx = Math.round(b.x), by = Math.round(b.y);
+      if (by >= 0 && by < H && bx >= 0 && bx < W && out[by][bx] === ' ')
+        out[by][bx] = b.ch;
+    }
+    return out.map(r => r.join('')).join('\n');
+  }
+
+  const gapSeq = [
+    0,0,0,0,0,0,
+    1,1,2,2,3,3,4,5,6,
+    6,6,6,6,6,6,6,6,6,6,
+    5,4,3,3,2,2,1,1,
+    0,0,0,0,0,0,
+  ];
+  let seqIdx = 0, lastFrame = 0, shimToggle = false;
+
+  clamAscii.textContent = render(frames[0]);
+
+  const tick = (ts) => {
     const elapsed = Date.now() - startTime;
     progress = Math.min((elapsed / duration) * 100, 100);
-    
-    loadingPercentage.textContent = Math.floor(progress) + "%";
-    loadingBar.style.width = progress + "%";
-    
+    loadingPercentage.textContent = Math.floor(progress) + '%';
+
+    if (ts - lastFrame >= 130) {
+      lastFrame = ts;
+      const g = gapSeq[seqIdx % gapSeq.length];
+      seqIdx++;
+      shimToggle = !shimToggle;
+      spawnBubble(g);
+      updateBubbles();
+      const key = (g >= 4 && shimToggle) ? g + 's' : g;
+      clamAscii.textContent = render(frames[key]);
+    }
+
     if (progress < 100) {
-      requestAnimationFrame(updateLoading);
+      requestAnimationFrame(tick);
     } else {
-      // Wait a moment, then fade out and show content
       setTimeout(() => {
-        loadingScreen.classList.add("hidden");
-        document.body.classList.add("loaded");
-      }, 300);
+        loadingScreen.classList.add('hidden');
+        document.body.classList.add('loaded');
+      }, 400);
     }
   };
-  
-  // Start loading animation
-  requestAnimationFrame(updateLoading);
+
+  requestAnimationFrame(tick);
 };
 
 // Initialize loading screen when page loads
