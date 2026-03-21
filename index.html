@@ -4,16 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio - Project Gallery</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="portfolio-main.css">
     <script src="https://kit.fontawesome.com/99f26788e2.js" crossorigin="anonymous"></script>
 </head>
 <body>
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-percentage" id="loading-percentage">0%</div>
-            <div class="loading-bar-container">
-                <div class="loading-bar" id="loading-bar"></div>
+        <div class="loader-container">
+            <pre id="ascii-frame" class="ascii-frame" aria-hidden="true"></pre>
+            <div class="cat-loader-bar-block">
+                <div class="cat-loading-bar">
+                    <div class="cat-loading-bar-fill" id="loading-bar-fill"></div>
+                </div>
+                <div class="cat-loading-text" id="loading-hint">loading</div>
             </div>
         </div>
     </div>
@@ -91,6 +97,7 @@
         </div>
     </div>
     
+    <script src="loader-cat-frames.js"></script>
     <script src="portfolio-main.js"></script>
 </body>
 </html>

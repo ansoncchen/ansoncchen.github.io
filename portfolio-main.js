@@ -1,7 +1,8 @@
 // Loading screen
 const loadingScreen = document.getElementById("loading-screen");
-const loadingPercentage = document.getElementById("loading-percentage");
-const loadingBar = document.getElementById("loading-bar");
+const loadingBarFill = document.getElementById("loading-bar-fill");
+const asciiFrame = document.getElementById("ascii-frame");
+const loadingHint = document.getElementById("loading-hint");
 
 const track = document.getElementById("image-track");
 const counter = document.getElementById("counter");
@@ -336,28 +337,76 @@ window.addEventListener('resize', updateCounter);
 
 // Loading screen animation
 const initLoadingScreen = () => {
+  const frames = window.__CAT_LOADER_FRAMES;
+  let catFrameIntervalId = null;
+  let currentCatFrame = 0;
+
+  if (asciiFrame && Array.isArray(frames) && frames.length >= 2) {
+    asciiFrame.textContent = frames[0];
+    catFrameIntervalId = window.setInterval(() => {
+      currentCatFrame = 1 - currentCatFrame;
+      asciiFrame.textContent = frames[currentCatFrame];
+    }, 350);
+  }
+
   let progress = 0;
   const duration = 2000; // 2 seconds total
   const startTime = Date.now();
-  
+  let waitingForClick = false;
+
+  const dismissLoader = () => {
+    if (!waitingForClick || !loadingScreen) return;
+    waitingForClick = false;
+    loadingScreen.removeEventListener("click", onDismissClick);
+    loadingScreen.removeEventListener("keydown", onDismissKey);
+    if (catFrameIntervalId !== null) {
+      window.clearInterval(catFrameIntervalId);
+      catFrameIntervalId = null;
+    }
+    loadingScreen.classList.remove("loading-screen--ready");
+    loadingScreen.removeAttribute("tabindex");
+    loadingScreen.removeAttribute("role");
+    loadingScreen.removeAttribute("aria-label");
+    loadingScreen.classList.add("hidden");
+    document.body.classList.add("loaded");
+  };
+
+  const onDismissClick = () => dismissLoader();
+
+  const onDismissKey = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      dismissLoader();
+    }
+  };
+
   const updateLoading = () => {
     const elapsed = Date.now() - startTime;
     progress = Math.min((elapsed / duration) * 100, 100);
-    
-    loadingPercentage.textContent = Math.floor(progress) + "%";
-    loadingBar.style.width = progress + "%";
-    
+
+    if (loadingBarFill) {
+      loadingBarFill.style.width = progress + "%";
+    }
+
     if (progress < 100) {
       requestAnimationFrame(updateLoading);
-    } else {
-      // Wait a moment, then fade out and show content
-      setTimeout(() => {
-        loadingScreen.classList.add("hidden");
-        document.body.classList.add("loaded");
-      }, 300);
+    } else if (!waitingForClick) {
+      waitingForClick = true;
+      if (loadingHint) {
+        loadingHint.textContent = "click to continue";
+      }
+      if (loadingScreen) {
+        loadingScreen.classList.add("loading-screen--ready");
+        loadingScreen.setAttribute("tabindex", "0");
+        loadingScreen.setAttribute("role", "button");
+        loadingScreen.setAttribute("aria-label", "Continue to portfolio");
+        loadingScreen.addEventListener("click", onDismissClick);
+        loadingScreen.addEventListener("keydown", onDismissKey);
+        loadingScreen.focus({ preventScroll: true });
+      }
     }
   };
-  
+
   // Start loading animation
   requestAnimationFrame(updateLoading);
 };
