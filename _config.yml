@@ -1,0 +1,15 @@
+title: Anson Chen
+description: Personal portfolio
+url: "https://ansoncchen.github.io"
+baseurl: ""
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - vendor
+  - .DS_Store

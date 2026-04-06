@@ -1,3 +1,11 @@
+/** Prefix for static paths when the site is served under Jekyll `baseurl` (e.g. project pages). */
+const withBase = (relPath) => {
+  if (!relPath || /^https?:\/\//i.test(relPath)) return relPath;
+  const prefix = (document.querySelector('meta[name="path-prefix"]')?.getAttribute("content") || "").replace(/\/$/, "");
+  const clean = String(relPath).replace(/^\//, "");
+  return prefix ? `${prefix}/${clean}` : `/${clean}`;
+};
+
 // Loading screen
 const loadingScreen = document.getElementById("loading-screen");
 const loadingBarFill = document.getElementById("loading-bar-fill");
@@ -250,7 +258,7 @@ window.addEventListener('wheel', handleWheel, { passive: false });
 // Load projects data and initialize carousel
 const loadProjects = async () => {
   try {
-    const response = await fetch('projects.json');
+    const response = await fetch(withBase("projects.json"));
     projectsData = await response.json();
     totalImages = projectsData.length;
     
@@ -294,7 +302,7 @@ const generateCarousel = () => {
   projectsData.forEach((project, index) => {
     const img = document.createElement('img');
     img.className = 'image';
-    img.src = project.carouselImage;
+    img.src = withBase(project.carouselImage);
     img.draggable = false;
     img.dataset.projectId = project.id;
     img.dataset.projectIndex = index;
@@ -584,7 +592,7 @@ const renderProjectPage = (project) => {
   
   // Create project images gallery with carousel navigation
   const imagesHTML = project.images.map((img, index) => 
-    `<img src="${img}" alt="${project.title}" class="project-image ${index === 0 ? 'active' : ''}" data-index="${index}" />`
+    `<img src="${withBase(img)}" alt="${project.title}" class="project-image ${index === 0 ? 'active' : ''}" data-index="${index}" />`
   ).join('');
   
   const carouselNavHTML = project.images.length > 1 ? `

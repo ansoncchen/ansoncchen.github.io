@@ -1,0 +1,85 @@
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loader-container">
+            <pre id="ascii-frame" class="ascii-frame" aria-hidden="true"></pre>
+            <div class="cat-loader-bar-block">
+                <div class="cat-loading-bar">
+                    <div class="cat-loading-bar-fill" id="loading-bar-fill"></div>
+                </div>
+                <div class="cat-loading-text" id="loading-hint">loading</div>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="nav">
+        <a href="#" class="nav-link active" data-page="projects">Projects</a>
+        <a href="#" class="nav-link" data-page="about">About</a>
+    </nav>
+    
+    <!-- Projects Page -->
+    <div id="projects-page" class="page active">
+        <div id="image-track" data-mouse-down-at="0" data-prev-percentage="0">
+        <!-- Images will be dynamically generated from projects.json -->
+        </div>
+        <div class="counter" id="counter">
+            <span class="counter-number" id="current-number">1</span>
+            <span class="counter-separator"> - </span>
+            <span class="counter-number" id="total-number">0</span>
+        </div>
+    </div>
+    
+    <!-- Project Detail Page -->
+    <div id="project-detail-page" class="page">
+        <button class="back-button" id="back-button" aria-label="Back to projects">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back</span>
+        </button>
+        <div class="project-container" id="project-container">
+            <!-- Project content will be dynamically generated -->
+        </div>
+    </div>
+    
+    <!-- About Page -->
+    <div id="about-page" class="page">
+        <div class="about-container">
+            <div class="about-image-container">
+                <img src="{{ '/assets/images/IMG_9118.jpeg' | relative_url }}" alt="Sunset landscape" class="about-image" />
+            </div>
+            <div class="about-content">
+                <div class="about-intro-wrapper">
+                    <p class="about-intro">Hi! I'm Anson, a CS undergrad at UW Seattle. I work on using data to understand all the weird problems out there.</p>
+                </div>
+                
+                <div class="about-icons-wrapper">
+                    <div class="about-icons">
+                    <a href="mailto:ac283@cs.washington.edu" class="icon-link" data-icon="Email">
+                        <div class="icon-circle">
+                            <i class="fa-regular fa-envelope"></i>
+                        </div>
+                    </a>
+                    <a href="https://drive.google.com/file/d/1tP_cUI74Guc1OTPCrBrJlfolOD5KfA8L/view?usp=sharing" target="_blank" class="icon-link" data-icon="Resume">
+                        <div class="icon-circle">
+                            <i class="fa-regular fa-file"></i>
+                        </div>
+                    </a>
+                    <a href="https://github.com/ansoncchen" target="_blank" class="icon-link" data-icon="Github">
+                        <div class="icon-circle">
+                            <i class="fa-brands fa-github"></i>
+                        </div>
+                    </a>
+                    <a href="https://www.linkedin.com/in/anson-chongan-chen/" target="_blank" class="icon-link" data-icon="Linkedin">
+                        <div class="icon-circle">
+                            <i class="fa-brands fa-linkedin-in"></i>
+                        </div>
+                    </a>
+                    <a href="#" class="icon-link disabled" data-icon="Substack">
+                        <div class="icon-circle">
+                            <i class="fa-brands fa-blogger"></i>
+                        </div>
+                    </a>
+                    </div>
+                    <p class="about-hover-text" id="hover-text"></p>
+                </div>
+            </div>
+        </div>
+    </div>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="path-prefix" content="{{ site.baseurl }}">
+    <title>{{ page.title | default: site.title }}</title>
+    {% seo %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ '/assets/css/portfolio-main.css' | relative_url }}">
+    <script src="https://kit.fontawesome.com/99f26788e2.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    {% include portfolio_body.html %}
+    <script src="{{ '/assets/js/loader-cat-frames.js' | relative_url }}"></script>
+    <script src="{{ '/assets/js/portfolio-main.js' | relative_url }}"></script>
+</body>
+</html>
