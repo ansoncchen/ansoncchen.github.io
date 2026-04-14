@@ -16,27 +16,31 @@
         <a href="#" class="nav-link" data-page="about">About</a>
     </nav>
     
-    <!-- Projects Page -->
-    <div id="projects-page" class="page active">
-        <div id="image-track" data-mouse-down-at="0" data-prev-percentage="0">
-        <!-- Images will be dynamically generated from projects.json -->
+    <!-- Projects: hero carousel + resume-style sections below -->
+    <div id="projects-page" class="page active projects-page-layout">
+        <div id="projects-hero" class="projects-hero">
+            <div id="image-track" data-mouse-down-at="0" data-prev-percentage="0" aria-label="Project carousel — click an image to jump to its write-up below">
+            <!-- Images generated from projects data -->
+            </div>
+            <div class="counter" id="counter">
+                <span class="counter-number" id="current-number">1</span>
+                <span class="counter-separator"> - </span>
+                <span class="counter-number" id="total-number">0</span>
+            </div>
+            <p class="hero-scroll-hint">Click an image to jump to that project below.</p>
         </div>
-        <div class="counter" id="counter">
-            <span class="counter-number" id="current-number">1</span>
-            <span class="counter-separator"> - </span>
-            <span class="counter-number" id="total-number">0</span>
-        </div>
-    </div>
-    
-    <!-- Project Detail Page -->
-    <div id="project-detail-page" class="page">
-        <button class="back-button" id="back-button" aria-label="Back to projects">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>Back</span>
-        </button>
-        <div class="project-container" id="project-container">
-            <!-- Project content will be dynamically generated -->
-        </div>
+
+        <section class="portfolio-resume" aria-label="Projects and work">
+            <header class="portfolio-resume-header">
+                <h2 class="portfolio-resume-heading">Work</h2>
+                <p class="portfolio-resume-lede">Selected projects and research. Use the carousel above for a quick visual index.</p>
+            </header>
+            <div class="portfolio-resume-list">
+                {% for project in site.data.projects %}
+                {% include resume_project.html project=project %}
+                {% endfor %}
+            </div>
+        </section>
     </div>
     
     <!-- About Page -->

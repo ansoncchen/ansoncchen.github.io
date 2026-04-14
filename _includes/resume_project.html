@@ -1,0 +1,27 @@
+{% assign p = include.project %}
+{% assign links = p.links %}
+<article class="resume-project" id="{{ p.id | escape }}">
+  <h2 class="resume-project-title">{{ p.title | escape }}</h2>
+  <div class="resume-project-body">
+    <p class="resume-project-description">{{ p.description | escape }}</p>
+    {% if p.technologies and p.technologies.size > 0 %}
+    <p class="resume-tech-line"><span class="resume-tech-label">Technologies:</span> {{ p.technologies | join: ", " }}</p>
+    {% endif %}
+    {% if links.github != blank or links.demo != blank or links.website != blank or links.poster != blank %}
+    <ul class="resume-link-list">
+      {% if links.github != blank %}
+      <li><a href="{{ links.github }}" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      {% endif %}
+      {% if links.demo != blank %}
+      <li><a href="{{ links.demo }}" target="_blank" rel="noopener noreferrer">Demo</a></li>
+      {% endif %}
+      {% if links.website != blank %}
+      <li><a href="{{ links.website }}" target="_blank" rel="noopener noreferrer">Website</a></li>
+      {% endif %}
+      {% if links.poster != blank %}
+      <li><a href="{{ links.poster }}" target="_blank" rel="noopener noreferrer">Poster (PDF)</a></li>
+      {% endif %}
+    </ul>
+    {% endif %}
+  </div>
+</article>
