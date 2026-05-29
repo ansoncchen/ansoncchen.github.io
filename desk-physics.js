@@ -223,6 +223,7 @@
       if (elapsed < 200 && moved < 6) {
         // Treated as a click: open.
         if (window.CatCompanion) window.CatCompanion.happy();
+        if (window.Confetti) window.Confetti.burst(card.x, card.y);
         if (onOpen) onOpen(card.id);
         return;
       }
