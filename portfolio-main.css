@@ -81,10 +81,10 @@ body {
     font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     font-size: 6.5px;
     line-height: 1.1;
-    color: #e8e8e8;
+    color: var(--accent);
     white-space: pre;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 8px rgba(255, 255, 255, 0.15);
+    text-shadow: 0 0 8px rgba(138, 240, 192, 0.25);
     margin: 0;
     max-width: 100%;
     overflow: hidden;
@@ -101,7 +101,7 @@ body {
   .cat-loading-text {
     font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     font-size: 11px;
-    color: #666;
+    color: var(--muted);
     letter-spacing: 4px;
     text-transform: uppercase;
   }
@@ -117,7 +117,7 @@ body {
   .cat-loading-bar-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #333, #888, #333);
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
     background-size: 200% 100%;
     animation: cat-loader-shimmer 1.5s ease-in-out infinite;
     border-radius: 1px;

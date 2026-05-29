@@ -14,7 +14,6 @@ const loadProjects = async () => {
     const countEl = document.getElementById('project-count');
     if (countEl) countEl.textContent = String(projectsData.length);
     if (window.Desk) window.Desk.init(projectsData, openProject);
-    if (window.CatCompanion) window.CatCompanion.init();
   } catch (error) {
     console.error('Error loading projects:', error);
   }
@@ -56,6 +55,7 @@ const initLoadingScreen = () => {
     loadingScreen.removeAttribute("aria-label");
     loadingScreen.classList.add("hidden");
     document.body.classList.add("loaded");
+    if (window.CatCompanion) window.CatCompanion.init();
   };
 
   const onDismissClick = () => dismissLoader();
