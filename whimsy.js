@@ -59,7 +59,7 @@
     wrap(window.CatCompanion, 'init', () => { catReady = true; scheduleHint(); });
   }
   if (window.Confetti) {
-    wrap(window.Confetti, 'burst', () => bump('confetti'));
+    wrap(window.Confetti, 'burst', (x, y) => { bump('confetti'); if (!bcApplying) bcSend({ type: 'confetti', x: x, y: y }); });
   }
 
   // "Cards flung" — drag-release that wasn't a click-open (mirrors desk-physics test).
@@ -224,6 +224,13 @@
     'cat ....... a cat',
     'ls ........ look around',
     'stats ..... your little trackers',
+    'life ...... conway\'s game of life ("life stop" ends it)',
+    'fractal ... mandelbrot set ("fractal zoom" to dive in)',
+    'dig ....... real DNS-over-HTTPS lookup (dig github.com MX)',
+    'ip ........ your public ip + rough location (live)',
+    'mine ...... sha-256 proof-of-work in a web worker (mine 20)',
+    'synth ..... chiptune + live ascii spectrum (web audio)',
+    'tabs ...... cross-tab presence (open a 2nd tab!)',
     'roll ...... try your luck 🎲',
     'warp ...... bend the desk (ctrl+alt+enter; ↑/↓ to dial; ctrl+alt+m = möbius)',
     'boil ...... squigglevision, site-wide',
@@ -288,6 +295,7 @@
   function closeTerm() {
     if (!term) return;
     termOpen = false;
+    lifeStop(); synthStop(); mineStop();
     term.classList.remove('open');
     if (termInput) termInput.blur();
   }
@@ -297,6 +305,7 @@
     const line = (raw || '').trim();
     if (line) { cmdHistory.push(line); hIdx = cmdHistory.length; }
     println('$ ' + line);
+    lifeStop(); synthStop(); mineStop();            // any command ends a running sim/tune/miner
     const parts = line.split(/\s+/);
     const cmd = (parts[0] || '').toLowerCase();
     switch (cmd) {
@@ -307,6 +316,34 @@
       case 'ls': println('projects/  about/  resume.pdf  secrets/  cat.gif'); break;
       case 'sudo': println("nice try. you don't have root on my heart. 🐾"); break;
       case 'stats': println(statsText()); break;
+      case 'life':
+        if ((parts[1] || '').toLowerCase() === 'stop') println('life stopped at gen ' + lifeGen + '.');
+        else startLife();
+        break;
+      case 'fractal': case 'mandelbrot': case 'mandel': {
+        const sub = (parts[1] || '').toLowerCase();
+        if (sub === 'zoom' || sub === 'in') fracZoom = Math.min(8, fracZoom + 1);
+        else if (sub === 'out') fracZoom = Math.max(0, fracZoom - 1);
+        else fracZoom = 0;                            // bare/`reset` = full set
+        renderFractal();
+        break;
+      }
+      case 'dig': digLookup(parts[1], parts[2]); break;
+      case 'ip': case 'whereami': ipLookup(); break;
+      case 'mine':
+        if ((parts[1] || '').toLowerCase() === 'stop') println('mining aborted.');
+        else startMine(parts[1]);
+        break;
+      case 'synth': case 'play':
+        if ((parts[1] || '').toLowerCase() === 'stop') println('synth cut.');
+        else playSynth();
+        break;
+      case 'tabs': {
+        const n = tabCount();
+        println(n + ' tab' + (n === 1 ? '' : 's') + ' connected via BroadcastChannel' +
+          (n === 1 ? '. open a 2nd tab — the cats find each other. 🐾' : ' — ghost cats are live. 🐾'));
+        break;
+      }
       case 'roll': println(roll()); break;
       case 'warp': println(warpToggle() ? 'warp engaged. ctrl+alt+↑/↓ to bend, ctrl+alt+m for möbius.' : 'warp off.'); break;
       case 'mobius': case 'möbius': println('möbius ' + (mobiusToggle() ? 'on' : 'off') + '.'); break;
@@ -337,6 +374,452 @@
   }
 
   // ------------------------------------------------------------------
+  // Conway's Game of Life — a real cellular automaton, live in the terminal
+  // ------------------------------------------------------------------
+  let lifeEl = null, lifeTimer = null, lifeGrid = null;
+  let lifeCols = 0, lifeRows = 0, lifeGen = 0;
+  const LIFE_ROWS = 22, LIFE_MAX_GEN = 900, LIFE_MS = 110;
+
+  // Fit as many columns as the terminal can show: measure the monospace
+  // advance width with a hidden probe rather than hardcoding a width.
+  function lifeMeasureCols() {
+    const probe = document.createElement('span');
+    probe.textContent = '0'.repeat(50);
+    probe.style.cssText = 'visibility:hidden;white-space:pre;';
+    lifeEl.appendChild(probe);
+    const charW = (probe.offsetWidth / 50) || 7;
+    probe.remove();
+    const avail = lifeEl.clientWidth || 360;
+    return Math.max(24, Math.min(72, Math.floor(avail / charW)));
+  }
+
+  function lifeSeed() {
+    const g = new Uint8Array(lifeCols * lifeRows);
+    // Gosper glider gun (emits gliders forever) when it fits; else a
+    // random "soup". Coordinates are the canonical 36x9 pattern.
+    if (lifeCols >= 38 && lifeRows >= 11) {
+      const gun = [[24,0],[22,1],[24,1],[12,2],[13,2],[20,2],[21,2],[34,2],[35,2],
+        [11,3],[15,3],[20,3],[21,3],[34,3],[35,3],[0,4],[1,4],[10,4],[16,4],[20,4],[21,4],
+        [0,5],[1,5],[10,5],[14,5],[16,5],[17,5],[22,5],[24,5],[10,6],[16,6],[24,6],
+        [11,7],[15,7],[12,8],[13,8]];
+      for (let i = 0; i < gun.length; i++) {
+        const x = gun[i][0] + 1, y = gun[i][1] + 1;
+        g[y * lifeCols + x] = 1;
+      }
+    } else {
+      for (let i = 0; i < g.length; i++) g[i] = Math.random() < 0.32 ? 1 : 0;
+    }
+    return g;
+  }
+
+  function lifeStep() {
+    const c = lifeCols, r = lifeRows, g = lifeGrid, next = new Uint8Array(c * r);
+    for (let y = 0; y < r; y++) {
+      for (let x = 0; x < c; x++) {
+        let n = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            const nx = x + dx, ny = y + dy;        // bounded edges = dead
+            if (nx >= 0 && nx < c && ny >= 0 && ny < r) n += g[ny * c + nx];
+          }
+        }
+        const alive = g[y * c + x];
+        next[y * c + x] = (alive ? (n === 2 || n === 3) : n === 3) ? 1 : 0;
+      }
+    }
+    lifeGrid = next;
+    lifeGen++;
+  }
+
+  function lifeRender(note) {
+    let out = '', pop = 0;
+    for (let y = 0; y < lifeRows; y++) {
+      let row = '';
+      for (let x = 0; x < lifeCols; x++) {
+        const v = lifeGrid[y * lifeCols + x];
+        pop += v;
+        row += v ? '█' : ' ';
+      }
+      out += row + '\n';
+    }
+    lifeEl.textContent = out + 'gen ' + lifeGen + ' · pop ' + pop + '   —   ' + note;
+  }
+
+  function startLife() {
+    lifeStop();
+    lifeEl = document.createElement('div');
+    lifeEl.className = 'wm-life';
+    termLog.appendChild(lifeEl);
+    lifeCols = lifeMeasureCols();
+    lifeRows = LIFE_ROWS;
+    lifeGrid = lifeSeed();
+    lifeGen = 0;
+    if (reduced) {                                  // honor reduced-motion
+      lifeRender('reduced-motion: one still generation');
+      termLog.scrollTop = termLog.scrollHeight;
+      return;
+    }
+    lifeRender('"life stop" or any command to end');
+    termLog.scrollTop = termLog.scrollHeight;
+    lifeTimer = setInterval(() => {
+      lifeStep();
+      lifeRender('"life stop" or any command to end');
+      if (lifeGen >= LIFE_MAX_GEN) lifeStop();
+    }, LIFE_MS);
+  }
+
+  function lifeStop() {
+    if (lifeTimer) { clearInterval(lifeTimer); lifeTimer = null; }
+  }
+
+  // ------------------------------------------------------------------
+  // Mandelbrot set — escape-time iteration rendered as shaded ASCII
+  // ------------------------------------------------------------------
+  const FRAC_ROWS = 24;
+  const FRAC_RAMP = ' .:-=+*#%';            // exterior halo: fast→slow escape
+  const SEAHORSE = { x: -0.743644, y: 0.131826 };  // classic deep-zoom target
+  const FRAC_STEP = 0.32;                   // view shrink per zoom level
+  let fracZoom = 0;                         // 0 = full set
+
+  // Measure a single monospace cell so the complex plane maps without
+  // distortion (terminal cells are taller than they are wide).
+  function measureCell(el) {
+    const probe = document.createElement('span');
+    probe.textContent = '0';
+    probe.style.cssText = 'visibility:hidden;white-space:pre;display:inline-block;';
+    el.appendChild(probe);
+    const w = probe.offsetWidth || 7, h = probe.offsetHeight || 12;
+    probe.remove();
+    return { w: w, h: h };
+  }
+
+  function renderFractal() {
+    const el = document.createElement('div');
+    el.className = 'wm-fractal';
+    termLog.appendChild(el);
+    const cell = measureCell(el);
+    const cols = Math.max(24, Math.min(80, Math.floor((el.clientWidth || 360) / cell.w)));
+    const rows = FRAC_ROWS;
+    const H = 1.2 * Math.pow(FRAC_STEP, fracZoom);            // vertical half-extent
+    const W = H * (cols * cell.w) / (rows * cell.h);          // derive width from aspect
+    const cx = fracZoom > 0 ? SEAHORSE.x : -0.6;
+    const cy = fracZoom > 0 ? SEAHORSE.y : 0;
+    const maxIter = 70 + fracZoom * 55;
+    let out = '';
+    for (let row = 0; row < rows; row++) {
+      const im = cy + ((row / (rows - 1)) - 0.5) * 2 * H;
+      let line = '';
+      for (let col = 0; col < cols; col++) {
+        const re = cx + ((col / (cols - 1)) - 0.5) * 2 * W;
+        let zr = 0, zi = 0, it = 0;
+        while (zr * zr + zi * zi <= 4 && it < maxIter) {
+          const t = zr * zr - zi * zi + re;
+          zi = 2 * zr * zi + im;
+          zr = t;
+          it++;
+        }
+        if (it >= maxIter) line += '█';                       // inside the set
+        else {
+          const f = Math.pow(it / maxIter, 0.4);              // gamma for a softer halo
+          line += FRAC_RAMP[Math.min(FRAC_RAMP.length - 1, (f * FRAC_RAMP.length) | 0)];
+        }
+      }
+      out += line + '\n';
+    }
+    const mag = Math.round(1 / Math.pow(FRAC_STEP, fracZoom));
+    const where = fracZoom > 0 ? ('seahorse valley · ×' + mag) : 'full set';
+    el.textContent = out + 'mandelbrot · ' + where + ' · ' + maxIter +
+      ' iters   —   "fractal zoom" to dive, "fractal reset" to back out';
+    termLog.scrollTop = termLog.scrollHeight;
+  }
+
+  // ------------------------------------------------------------------
+  // Live networking — real requests from a "static" GitHub Pages site.
+  // No backend exists; the browser is the compute, third-party APIs the
+  // backend we never deployed.
+  // ------------------------------------------------------------------
+  const DIG_TYPES = ['A', 'AAAA', 'MX', 'TXT', 'NS', 'CNAME', 'SOA'];
+  const DNS_TYPE_NAME = { 1: 'A', 2: 'NS', 5: 'CNAME', 6: 'SOA', 15: 'MX', 16: 'TXT', 28: 'AAAA' };
+  const DNS_STATUS = { 0: 'NOERROR', 2: 'SERVFAIL', 3: 'NXDOMAIN', 5: 'REFUSED' };
+
+  // `dig <domain> [TYPE]` — real DNS resolution via DNS-over-HTTPS (RFC 8484,
+  // Google's JSON endpoint).
+  async function digLookup(rawName, rawType) {
+    const name = (rawName || '').trim().toLowerCase().replace(/\.$/, '');
+    if (!name || !/^[a-z0-9.-]+$/.test(name) || name.indexOf('.') === -1) {
+      println('usage: dig <domain> [A|AAAA|MX|TXT|NS|CNAME|SOA]   e.g. dig github.com MX');
+      return;
+    }
+    let type = (rawType || 'A').toUpperCase();
+    if (DIG_TYPES.indexOf(type) === -1) type = 'A';
+    println('; <<>> dig over https <<>> ' + name + ' ' + type);
+    try {
+      const url = 'https://dns.google/resolve?name=' + encodeURIComponent(name) + '&type=' + type;
+      const res = await fetch(url, { headers: { accept: 'application/dns-json' } });
+      const d = await res.json();
+      if (d.Status !== 0) { println(';; status: ' + (DNS_STATUS[d.Status] || d.Status) + ' — no records'); return; }
+      const ans = d.Answer || [];
+      if (!ans.length) { println(';; no ' + type + ' records for ' + name); return; }
+      for (let i = 0; i < ans.length; i++) {
+        const a = ans[i];
+        println(a.name + '  ' + a.TTL + '  ' + (DNS_TYPE_NAME[a.type] || a.type) + '  ' + a.data);
+      }
+      println(';; ' + ans.length + ' answer' + (ans.length === 1 ? '' : 's') + ' · via dns.google');
+    } catch (e) {
+      println(';; lookup failed — dns-over-https needs a live connection.');
+    }
+  }
+
+  // `ip` / `whereami` — your public IP + rough geolocation, fetched live.
+  async function ipLookup() {
+    println('; resolving your connection…');
+    const show = (d, isp) => {
+      const loc = [d.city, d.region, d.country].filter(Boolean).join(', ') || '—';
+      println('ip ........ ' + (d.ip || '—'));
+      println('location .. ' + loc);
+      println('isp ....... ' + (isp || '—'));
+      if (d.latitude && d.longitude) println('coords .... ' + d.latitude + ', ' + d.longitude);
+      println(';; only you can see this — nothing is stored. 🐾');
+    };
+    try {
+      const r = await fetch('https://get.geojs.io/v1/ip/geo.json');
+      const d = await r.json();
+      show(d, d.organization_name || d.organization);
+      return;
+    } catch (e1) {}
+    try {                                            // fallback provider
+      const r = await fetch('https://ipapi.co/json/');
+      const d = await r.json();
+      show({ ip: d.ip, city: d.city, region: d.region, country: d.country_name,
+             latitude: d.latitude, longitude: d.longitude }, d.org);
+      return;
+    } catch (e2) {}
+    println(';; lookup failed — offline, or both providers blocked the request.');
+  }
+
+  // ------------------------------------------------------------------
+  // Proof-of-work miner — real SHA-256 PoW in a Web Worker (off the main
+  // thread, so the page never freezes), hashing via crypto.subtle.
+  // ------------------------------------------------------------------
+  const MINE_WORKER_SRC = [
+    'self.onmessage = async function (e) {',
+    '  var prefix = e.data.prefix, bits = e.data.bits;',
+    '  var enc = new TextEncoder();',
+    '  var fz = bits >> 3, rem = bits & 7;',
+    '  var nonce = 0, hashes = 0;',
+    '  var start = performance.now(), last = start;',
+    '  for (;;) {',
+    '    var dg = new Uint8Array(await crypto.subtle.digest("SHA-256", enc.encode(prefix + nonce)));',
+    '    hashes++;',
+    '    var ok = true, i;',
+    '    for (i = 0; i < fz; i++) { if (dg[i] !== 0) { ok = false; break; } }',
+    '    if (ok && rem) { if ((dg[fz] >> (8 - rem)) !== 0) ok = false; }',
+    '    if (ok) {',
+    '      var hex = "";',
+    '      for (i = 0; i < dg.length; i++) hex += dg[i].toString(16).padStart(2, "0");',
+    '      self.postMessage({ type: "found", nonce: nonce, hash: hex, hashes: hashes });',
+    '      return;',
+    '    }',
+    '    nonce++;',
+    '    if ((hashes & 2047) === 0) {',
+    '      var now = performance.now();',
+    '      if (now - last > 200) { self.postMessage({ type: "progress", hashes: hashes, rate: hashes / ((now - start) / 1000) }); last = now; }',
+    '    }',
+    '  }',
+    '};'
+  ].join('\n');
+
+  let mineWorker = null, mineEl = null, mineStart = 0;
+
+  function mineStop() {
+    if (mineWorker) { mineWorker.terminate(); mineWorker = null; }
+  }
+
+  function startMine(bitsArg) {
+    mineStop();
+    let bits = parseInt(bitsArg, 10);
+    if (!Number.isFinite(bits)) bits = 18;
+    bits = Math.max(8, Math.min(28, bits));
+    const prefix = 'anson@portfolio/' + Date.now() + '/';
+    println('; mining: find a sha-256 with ' + bits + ' leading zero bits…  ("mine stop" to abort)');
+    mineEl = document.createElement('div');
+    termLog.appendChild(mineEl);
+    mineStart = performance.now();
+    try {
+      const blob = new Blob([MINE_WORKER_SRC], { type: 'application/javascript' });
+      mineWorker = new Worker(URL.createObjectURL(blob));
+    } catch (e) { println(';; web workers unavailable here.'); return; }
+    mineWorker.onmessage = (ev) => {
+      const m = ev.data;
+      const secs = (performance.now() - mineStart) / 1000;
+      if (m.type === 'progress') {
+        mineEl.textContent = '⛏  ' + m.hashes.toLocaleString() + ' hashes · ' +
+          Math.round(m.rate).toLocaleString() + ' H/s · ' + secs.toFixed(1) + 's';
+        termLog.scrollTop = termLog.scrollHeight;
+      } else if (m.type === 'found') {
+        mineEl.textContent = '⛏  solved in ' + secs.toFixed(1) + 's after ' + m.hashes.toLocaleString() + ' hashes';
+        println('nonce ..... ' + m.nonce);
+        println('sha256 .... ' + m.hash);
+        println(';; ' + bits + ' leading zero bits — real proof-of-work, in a web worker. 🐾');
+        mineStop();
+        try { if (window.Confetti) Confetti.burst(window.innerWidth / 2, window.innerHeight / 2); } catch (_) {}
+      }
+    };
+    mineWorker.postMessage({ prefix: prefix, bits: bits });
+  }
+
+  // ------------------------------------------------------------------
+  // Cross-tab presence + ghost cats via BroadcastChannel — open the site
+  // in 2+ tabs/windows and they sync (cursors, confetti, a live count).
+  // ------------------------------------------------------------------
+  let bc = null, bcApplying = false;
+  const TAB_ID = Math.random().toString(36).slice(2, 9);
+  const peers = new Map();                       // id -> { x, y, last, el }
+
+  function bcSend(msg) { if (bc) { msg.id = TAB_ID; try { bc.postMessage(msg); } catch (_) {} } }
+
+  function initBroadcast() {
+    if (typeof BroadcastChannel === 'undefined') return;
+    try { bc = new BroadcastChannel('whimsy.tabs.v1'); } catch (_) { return; }
+    bc.onmessage = (e) => {
+      const m = e.data;
+      if (!m || m.id === TAB_ID) return;
+      let p = peers.get(m.id);
+      if (!p) { p = { x: 0, y: 0, last: 0, el: null }; peers.set(m.id, p); }
+      p.last = performance.now();
+      if (m.type === 'cursor') { p.x = m.x; p.y = m.y; updateGhost(p); }
+      else if (m.type === 'confetti') { bcApplying = true; try { if (window.Confetti) Confetti.burst(m.x, m.y); } catch (_) {} bcApplying = false; }
+      else if (m.type === 'leave') { removeGhost(p); peers.delete(m.id); }
+    };
+    let lastMove = 0;
+    window.addEventListener('pointermove', (e) => {
+      const t = performance.now();
+      if (t - lastMove < 45) return;
+      lastMove = t;
+      bcSend({ type: 'cursor', x: e.clientX, y: e.clientY });
+    });
+    setInterval(() => {                          // heartbeat + prune dead peers
+      bcSend({ type: 'ping' });
+      const now = performance.now();
+      peers.forEach((p, id) => { if (now - p.last > 2500) { removeGhost(p); peers.delete(id); } });
+    }, 1000);
+    window.addEventListener('pagehide', () => bcSend({ type: 'leave' }));
+    bcSend({ type: 'ping' });
+  }
+
+  function updateGhost(p) {
+    if (reduced) return;
+    if (!p.el) {
+      p.el = document.createElement('div');
+      p.el.className = 'wm-ghost-cat';
+      p.el.textContent = '(=^·ω·^=)';
+      p.el.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(p.el);
+    }
+    p.el.style.transform = 'translate3d(' + (p.x + 16) + 'px,' + (p.y + 16) + 'px,0)';
+    p.el.classList.add('show');
+  }
+  function removeGhost(p) { if (p && p.el) { p.el.remove(); p.el = null; } }
+  function tabCount() {
+    const now = performance.now();
+    let n = 1;
+    peers.forEach((p) => { if (now - p.last <= 2500) n++; });
+    return n;
+  }
+
+  // ------------------------------------------------------------------
+  // Chiptune synth — Web Audio oscillators + ADSR, visualized with a
+  // live AnalyserNode FFT drawn as an ASCII spectrum.
+  // ------------------------------------------------------------------
+  const TUNE = [          // [freq Hz, beats]
+    [523, 1], [659, 1], [784, 1], [1047, 1], [784, 1], [659, 1],
+    [587, 1], [698, 1], [880, 1], [1175, 1], [880, 1], [698, 1],
+    [523, 1], [784, 1], [659, 1], [523, 2],
+  ];
+  let actx = null, synthRaf = null, synthEl = null, synthAnalyser = null, synthMaster = null;
+
+  function synthCtx() {
+    if (!actx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; actx = new AC(); }
+    return actx;
+  }
+
+  function playSynth() {
+    const ctx = synthCtx();
+    if (!ctx) { println(';; web audio not available here.'); return; }
+    synthStop();
+    if (ctx.state === 'suspended') ctx.resume();
+    const master = ctx.createGain();
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    master.connect(analyser);
+    analyser.connect(ctx.destination);
+    synthMaster = master;
+    synthAnalyser = analyser;
+    const now = ctx.currentTime;
+    master.gain.setValueAtTime(0.28, now);
+    const beat = 0.16;
+    let t = now + 0.05;
+    for (let i = 0; i < TUNE.length; i++) {
+      const freq = TUNE[i][0], dur = TUNE[i][1] * beat;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0.0001, t);                       // ADSR
+      g.gain.linearRampToValueAtTime(0.6, t + 0.012);         // attack
+      g.gain.exponentialRampToValueAtTime(0.25, t + 0.05);    // decay → sustain
+      g.gain.setValueAtTime(0.25, t + dur - 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);   // release
+      osc.connect(g); g.connect(master);
+      osc.start(t); osc.stop(t + dur + 0.02);
+      t += dur;
+    }
+    const ms = (t - now) * 1000;
+    synthEl = document.createElement('div');
+    synthEl.className = 'wm-fractal';
+    termLog.appendChild(synthEl);
+    println('♪ synth: square-wave chiptune + live fft   ("synth stop" to cut)');
+    if (reduced) synthEl.textContent = '(spectrum animation off — reduced motion)';
+    else synthSpectrumLoop();
+    setTimeout(synthStop, ms + 400);
+    termLog.scrollTop = termLog.scrollHeight;
+  }
+
+  function synthSpectrumLoop() {
+    const bins = synthAnalyser.frequencyBinCount;
+    const data = new Uint8Array(bins);
+    const COLS = 48, ROWS = 8;
+    const draw = () => {
+      if (!synthAnalyser) return;
+      synthAnalyser.getByteFrequencyData(data);
+      const grid = [];
+      for (let r = 0; r < ROWS; r++) grid.push(new Array(COLS).fill(' '));
+      for (let c = 0; c < COLS; c++) {
+        const bin = Math.floor((c / COLS) * bins * 0.7);      // lower 70% of spectrum
+        const h = Math.round((data[bin] / 255) * ROWS);
+        for (let r = 0; r < h; r++) grid[ROWS - 1 - r][c] = '█';
+      }
+      synthEl.textContent = grid.map((row) => row.join('')).join('\n');
+      synthRaf = requestAnimationFrame(draw);
+    };
+    draw();
+  }
+
+  function synthStop() {
+    if (synthRaf) { cancelAnimationFrame(synthRaf); synthRaf = null; }
+    if (synthMaster && actx) {                                // silence if cut mid-tune
+      try {
+        const now = actx.currentTime;
+        synthMaster.gain.cancelScheduledValues(now);
+        synthMaster.gain.setValueAtTime(0.0001, now);
+      } catch (_) {}
+    }
+    synthMaster = null;
+    synthAnalyser = null;
+  }
+
+  // ------------------------------------------------------------------
   // Cat hints — the companion suggests an easter egg every ~10s
   // ------------------------------------------------------------------
   const HINTS = [
@@ -346,6 +829,12 @@
     "'boil' makes the site hand-drawn 〰",
     'know the konami code? ↑↑↓↓←→←→ B A',
     "try 'stats' to see what you've done",
+    "type 'life' for conway's game of life 🦠",
+    "'fractal' renders the mandelbrot set 🌀",
+    "try 'dig github.com MX' — real DNS in your browser 🌐",
+    "'mine' runs real sha-256 proof-of-work ⛏",
+    "'synth' = chiptune + a live spectrum ♪",
+    'open a 2nd tab — the cats find each other 🐾',
     'fling a card across the desk →',
   ];
   let hintIdx = -1;
@@ -442,8 +931,17 @@
     mobius: mobiusToggle,
     boil: boilToggle,
     y2k: y2k,
+    life: () => { openTerm(); startLife(); },
+    fractal: () => { openTerm(); fracZoom = 0; renderFractal(); },
+    dig: (name, type) => { openTerm(); digLookup(name, type); },
+    ip: () => { openTerm(); ipLookup(); },
+    mine: (bits) => { openTerm(); startMine(bits); },
+    synth: () => { openTerm(); playSynth(); },
+    tabs: () => tabCount(),
     roll: () => toast(roll()),
     hint: showHint,
     stats: () => stats,
   };
+
+  initBroadcast();
 })();

@@ -1183,6 +1183,35 @@ body.y2k::after {
   caret-color: var(--cat);
 }
 
+/* --- ASCII compute grids (the `life` + `fractal` + `synth` commands) --- */
+.wm-life,
+.wm-fractal {
+  white-space: pre;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  line-height: 1;
+  color: var(--cat);
+  margin: 6px 0;
+  overflow-x: auto;
+}
+
+/* --- Ghost cats from other tabs (BroadcastChannel cross-tab presence) --- */
+.wm-ghost-cat {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 55;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--cat);
+  opacity: 0;
+  filter: blur(0.3px);
+  transition: opacity 0.4s ease;
+  will-change: transform;
+}
+.wm-ghost-cat.show { opacity: 0.4; }
+
 /* --- Toast (luck rolls / nudges fired outside the terminal) --- */
 .wm-toast {
   position: fixed;
@@ -1228,6 +1257,7 @@ body.y2k::after {
 
 @media (prefers-reduced-motion: reduce) {
   .wm-cat-hint { display: none !important; }
+  .wm-ghost-cat { display: none !important; }
   .ascii-frame,
   .cat-companion,
   .desk-card,
