@@ -995,3 +995,10 @@ body {
     pointer-events: none;
     z-index: 40;
   }
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-card { transition: none !important; }
+  .cat-companion,
+  .confetti-canvas { display: none !important; }
+  .cat-loading-bar-fill { animation: none !important; }
+}
