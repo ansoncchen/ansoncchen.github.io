@@ -120,6 +120,49 @@
       'px,0) rotate(' + card.rot + 'deg)';
   }
 
+  const params = {
+    stiffness: 0.014, damping: 0.86, bobSpeed: 0.0016, bobAmp: 0.18,
+    repelRadius: 150, repelStrength: 0.5, restitution: 0.55,
+    tiltFactor: 0.5, rotStiffness: 0.08,
+  };
+  let cursor = null;
+  let rafId = null;
+  let reduced = false;
+
+  function bounds() {
+    return {
+      minX: CARD_W / 2 + 8,
+      maxX: window.innerWidth - CARD_W / 2 - 8,
+      minY: CARD_H / 2 + 70,                       // below nav
+      maxY: window.innerHeight - CARD_H / 2 - 56,  // above hint
+    };
+  }
+
+  function frame() {
+    const b = bounds();
+    for (const card of cards) {
+      if (card.dragging) { applyTransform(card); continue; }
+      stepCard(card, params, cursor, b, 16);
+      applyTransform(card);
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function startLoop() {
+    if (rafId == null && !reduced) rafId = requestAnimationFrame(frame);
+  }
+
+  function stopLoop() {
+    if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  window.addEventListener('pointermove', (e) => { cursor = { x: e.clientX, y: e.clientY }; });
+  window.addEventListener('pointerout', (e) => { if (!e.relatedTarget) cursor = null; });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopLoop();
+    else startLoop();
+  });
+
   function init(projects, openCb) {
     onOpen = openCb;
     const desk = document.getElementById('desk');
@@ -133,12 +176,75 @@
         x: 0, y: 0, vx: 0, vy: 0, rot: 0, vrot: 0,
         homeX: 0, homeY: 0, baseRot: 0, phase: index * 1.7, t: 0,
       };
-      el.addEventListener('click', () => { if (onOpen) onOpen(project.id); });
+      attachDrag(card);
       return card;
     });
     layoutCards();
     window.addEventListener('resize', layoutCards);
+    startLoop();
   }
 
-  window.Desk = { init: init };
+  function attachDrag(card) {
+    const el = card.el;
+    let downX = 0, downY = 0, downT = 0;
+    let lastX = 0, lastY = 0, lastMoveT = 0;
+    let velX = 0, velY = 0;
+
+    el.addEventListener('pointerdown', (e) => {
+      el.setPointerCapture(e.pointerId);
+      card.dragging = true;
+      card.vx = card.vy = 0;
+      downX = lastX = e.clientX;
+      downY = lastY = e.clientY;
+      downT = lastMoveT = performance.now();
+      card.grabDX = card.x - e.clientX;
+      card.grabDY = card.y - e.clientY;
+    });
+
+    el.addEventListener('pointermove', (e) => {
+      if (!card.dragging) return;
+      const now = performance.now();
+      const dt = Math.max(1, now - lastMoveT);
+      velX = (e.clientX - lastX) / dt * 16;
+      velY = (e.clientY - lastY) / dt * 16;
+      lastX = e.clientX; lastY = e.clientY; lastMoveT = now;
+      card.x = e.clientX + card.grabDX;
+      card.y = e.clientY + card.grabDY;
+      card.rot = card.baseRot + velX * params.tiltFactor;
+      applyTransform(card);
+    });
+
+    function release(e) {
+      if (!card.dragging) return;
+      card.dragging = false;
+      try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+      const moved = Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY);
+      const elapsed = performance.now() - downT;
+      if (elapsed < 200 && moved < 6) {
+        // Treated as a click: open.
+        if (onOpen) onOpen(card.id);
+        return;
+      }
+      // Fling: hand momentum back to the physics loop.
+      card.vx = Math.max(-40, Math.min(40, velX));
+      card.vy = Math.max(-40, Math.min(40, velY));
+    }
+
+    el.addEventListener('pointerup', release);
+    el.addEventListener('pointercancel', release);
+
+    // Keyboard activation: a <button> fires click with detail 0 on Enter/Space.
+    // Mouse clicks (detail >= 1) are already handled by the pointer release path.
+    el.addEventListener('click', (e) => {
+      if (e.detail === 0 && onOpen) onOpen(card.id);
+    });
+  }
+
+  function setReducedMotion(value) {
+    reduced = !!value;
+    if (reduced) { stopLoop(); layoutCards(); }
+    else startLoop();
+  }
+
+  window.Desk = { init: init, setReducedMotion: setReducedMotion };
 })();
