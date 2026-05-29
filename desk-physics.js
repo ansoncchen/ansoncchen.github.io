@@ -222,6 +222,7 @@
       const elapsed = performance.now() - downT;
       if (elapsed < 200 && moved < 6) {
         // Treated as a click: open.
+        if (window.CatCompanion) window.CatCompanion.happy();
         if (onOpen) onOpen(card.id);
         return;
       }
@@ -232,6 +233,9 @@
 
     el.addEventListener('pointerup', release);
     el.addEventListener('pointercancel', release);
+
+    el.addEventListener('pointerenter', () => { if (window.CatCompanion) window.CatCompanion.curious(); });
+    el.addEventListener('pointerleave', () => { if (window.CatCompanion) window.CatCompanion.idle(); });
 
     // Keyboard activation: a <button> fires click with detail 0 on Enter/Space.
     // Mouse clicks (detail >= 1) are already handled by the pointer release path.
