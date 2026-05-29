@@ -1,7 +1,18 @@
+:root {
+    --bg: #0e0e11;
+    --ink: #ECECEC;
+    --muted: #7a7a82;
+    --accent: #8AF0C0;
+    --pop: #FF7EA6;
+    --accent-2: #FFD56B;
+    --card-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
 body {
     height: 100vh;
     width: 100vw;
-    background-color: black;
+    background-color: var(--bg);
     margin: 0rem;
     overflow: hidden;
     user-select: none;
@@ -22,7 +33,7 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-color: #000;
+    background-color: var(--bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -30,7 +41,7 @@ body {
     opacity: 1;
     visibility: visible;
     font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
                 visibility 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
   
@@ -131,19 +142,19 @@ body {
   }
   
   .nav-link {
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #666;
+    font-family: var(--mono);
+    color: var(--muted);
     text-decoration: none;
     font-size: 1rem;
     transition: color 0.3s ease;
   }
-  
+
   .nav-link.active {
-    color: #fff;
+    color: var(--ink);
   }
-  
+
   .nav-link:hover {
-    color: #999;
+    color: var(--accent);
   }
   
   #image-track {
@@ -178,8 +189,8 @@ body {
     bottom: 2rem;
     left: 50%;
     transform: translateX(-50%);
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
+    font-family: var(--mono);
+    color: var(--ink);
     font-size: 1rem;
     z-index: 10;
     display: flex;
@@ -313,7 +324,7 @@ body {
   
   .about-intro {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
+    color: var(--ink);
     font-size: 1.15rem;
     line-height: 1.8;
     text-align: left;
@@ -338,7 +349,7 @@ body {
   
   .icon-link {
     text-decoration: none;
-    color: #fff;
+    color: var(--ink);
     position: relative;
   }
   
@@ -365,7 +376,7 @@ body {
   }
   
   .icon-link:hover .icon-circle {
-    border-color: rgba(255, 255, 255, 1);
+    border-color: var(--accent);
   }
   
   .icon-circle::before {
@@ -398,7 +409,7 @@ body {
   
   .about-hover-text {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
+    color: var(--ink);
     font-size: 0.95rem;
     text-align: left;
     min-height: 1.5em;
@@ -429,7 +440,7 @@ body {
     gap: 0.75rem;
     background: transparent;
     border: 1.5px solid rgba(255, 255, 255, 0.6);
-    color: #fff;
+    color: var(--ink);
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     font-size: 1rem;
     padding: 0.75rem 1.5rem;
@@ -442,7 +453,7 @@ body {
   }
   
   .back-button:hover {
-    border-color: rgba(255, 255, 255, 1);
+    border-color: var(--accent);
     transform: translate3d(-5px, 0, 0);
   }
   
@@ -534,7 +545,7 @@ body {
   .carousel-btn {
     background: transparent;
     border: 1px solid rgba(255, 255, 255, 0.4);
-    color: #fff;
+    color: var(--ink);
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -590,7 +601,7 @@ body {
   
   .project-title {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
+    color: var(--ink);
     font-size: 1.75rem;
     line-height: 1.4;
     text-align: left;
@@ -617,7 +628,7 @@ body {
   
   .project-description {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
+    color: var(--ink);
     font-size: 1rem;
     line-height: 1.9;
     text-align: left;
@@ -634,7 +645,7 @@ body {
   /* Markdown styling */
   .md-h1, .md-h2, .md-h3, .md-h4 {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
+    color: var(--ink);
     margin: 0 0 1rem 0;
     font-weight: 500;
     letter-spacing: 0.02em;
@@ -672,7 +683,7 @@ body {
   }
   
   .md-link {
-    color: #fff;
+    color: var(--ink);
     text-decoration: underline;
     text-underline-offset: 2px;
     opacity: 0.9;
@@ -685,7 +696,7 @@ body {
   
   .project-description strong {
     font-weight: 600;
-    color: #fff;
+    color: var(--ink);
   }
   
   .project-description em {
@@ -701,7 +712,7 @@ body {
   
   .project-technologies-label {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
+    color: var(--ink);
     font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -717,7 +728,7 @@ body {
   
   .tech-tag {
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-    color: #fff;
+    color: var(--ink);
     font-size: 0.9rem;
     padding: 0.5rem 1rem;
     border: 1.5px solid rgba(255, 255, 255, 0.3);
@@ -750,7 +761,7 @@ body {
   
   .project-link {
     text-decoration: none;
-    color: #fff;
+    color: var(--ink);
     position: relative;
     display: flex;
     flex-direction: column;
@@ -783,7 +794,7 @@ body {
   }
   
   .project-link:hover .icon-circle {
-    border-color: rgba(255, 255, 255, 1);
+    border-color: var(--accent);
   }
   
   .project-link .icon-circle::before {
