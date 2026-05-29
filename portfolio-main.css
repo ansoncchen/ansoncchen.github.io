@@ -2,9 +2,9 @@
     --bg: #0e0e11;
     --ink: #ECECEC;
     --muted: #7a7a82;
-    --accent: #8AF0C0;
     --pop: #FF7EA6;
     --accent-2: #FFD56B;
+    --cat: #EAF7F1;
     --card-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
     --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
@@ -81,10 +81,10 @@ body {
     font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
     font-size: 6.5px;
     line-height: 1.1;
-    color: var(--accent);
+    color: var(--cat);
     white-space: pre;
     letter-spacing: 0.5px;
-    text-shadow: 0 0 8px rgba(138, 240, 192, 0.25);
+    text-shadow: 0 0 8px rgba(234, 247, 241, 0.2);
     margin: 0;
     max-width: 100%;
     overflow: hidden;
@@ -117,7 +117,7 @@ body {
   .cat-loading-bar-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    background: linear-gradient(90deg, transparent, var(--cat), transparent);
     background-size: 200% 100%;
     animation: cat-loader-shimmer 1.5s ease-in-out infinite;
     border-radius: 1px;
@@ -154,7 +154,7 @@ body {
   }
 
   .nav-link:hover {
-    color: var(--accent);
+    color: var(--cat);
   }
   
   #image-track {
@@ -376,7 +376,7 @@ body {
   }
   
   .icon-link:hover .icon-circle {
-    border-color: var(--accent);
+    border-color: var(--cat);
   }
   
   .icon-circle::before {
@@ -453,7 +453,7 @@ body {
   }
   
   .back-button:hover {
-    border-color: var(--accent);
+    border-color: var(--cat);
     transform: translate3d(-5px, 0, 0);
   }
   
@@ -794,7 +794,7 @@ body {
   }
   
   .project-link:hover .icon-circle {
-    border-color: var(--accent);
+    border-color: var(--cat);
   }
   
   .project-link .icon-circle::before {
@@ -957,7 +957,7 @@ body {
   }
 
   .desk-card:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--cat);
     outline-offset: 3px;
   }
 
@@ -981,12 +981,12 @@ body {
     left: 0;
     font-family: var(--mono);
     font-size: 1.05rem;
-    color: var(--accent);
+    color: var(--cat);
     pointer-events: none;
     z-index: 50;
     will-change: transform;
     white-space: nowrap;
-    text-shadow: 0 0 10px rgba(138, 240, 192, 0.25);
+    text-shadow: 0 0 10px rgba(234, 247, 241, 0.25);
   }
 
   .confetti-canvas {

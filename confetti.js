@@ -3,7 +3,7 @@
   if (typeof document === 'undefined') return;
 
   let canvas = null, ctx = null, parts = [], raf = null;
-  const COLORS = ['#8AF0C0', '#FF7EA6', '#FFD56B', '#ECECEC'];
+  const COLORS = ['#EAF7F1', '#FF7EA6', '#FFD56B', '#ECECEC'];
 
   function resize() {
     if (!canvas) return;

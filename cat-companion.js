@@ -17,6 +17,7 @@
   let state = 'idle';
   let stateLock = 0;      // ms timestamp until which state is held
   let blinkAt = 0;
+  let hovering = false;   // pointer is over a card — hold curious until it leaves
   let hidden = false;
 
   function setFace(name) {
@@ -32,10 +33,16 @@
     if (el) el.style.transform = 'translate3d(' + (x + 16) + 'px,' + (y + 16) + 'px,0)';
     const speed = Math.abs(tx - x) + Math.abs(ty - y);
     if (now > stateLock) {
-      if (speed > 6) setFace('moving');
-      else {
-        if (now > blinkAt) { setFace('blink'); blinkAt = now + 2200 + Math.random() * 2000; stateLock = now + 140; }
-        else if (state !== 'blink') setFace('idle');
+      if (hovering) {
+        if (state !== 'curious') setFace('curious');
+      } else if (speed > 6) {
+        setFace('moving');
+      } else if (now > blinkAt) {
+        setFace('blink');
+        blinkAt = now + 2200 + Math.random() * 2000;
+        stateLock = now + 180;
+      } else if (state !== 'idle') {
+        setFace('idle');
       }
     }
     raf = requestAnimationFrame(loop);
@@ -49,9 +56,9 @@
     if (raf == null) raf = requestAnimationFrame(loop);
   }
 
-  function curious() { if (!hidden) { setFace('curious'); stateLock = performance.now() + 600; } }
-  function happy()   { if (!hidden) { setFace('happy');   stateLock = performance.now() + 900; } }
-  function idle()    { stateLock = 0; }
+  function curious() { if (!hidden) { hovering = true; setFace('curious'); stateLock = 0; } }
+  function happy()   { if (!hidden) { hovering = false; setFace('happy'); stateLock = performance.now() + 900; } }
+  function idle()    { hovering = false; stateLock = 0; }
   function hide()    { hidden = true; if (raf) { cancelAnimationFrame(raf); raf = null; } if (el) el.style.display = 'none'; }
 
   window.CatCompanion = { init, curious, happy, idle, hide };
