@@ -39,8 +39,8 @@
         setFace('moving');
       } else if (now > blinkAt) {
         setFace('blink');
-        blinkAt = now + 2200 + Math.random() * 2000;
-        stateLock = now + 180;
+        blinkAt = now + 1000 + Math.random() * 2000;
+        stateLock = now + 750;
       } else if (state !== 'idle') {
         setFace('idle');
       }
@@ -57,8 +57,8 @@
   }
 
   function curious() { if (!hidden) { hovering = true; setFace('curious'); stateLock = 0; } }
-  function happy()   { if (!hidden) { hovering = false; setFace('happy'); stateLock = performance.now() + 900; } }
-  function idle()    { hovering = false; stateLock = 0; }
+  function happy()   { if (!hidden) { hovering = false; setFace('happy'); stateLock = performance.now() + 3000; } }
+  function idle()    { hovering = false; }
   function hide()    { hidden = true; if (raf) { cancelAnimationFrame(raf); raf = null; } if (el) el.style.display = 'none'; }
 
   window.CatCompanion = { init, curious, happy, idle, hide };
