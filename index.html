@@ -31,14 +31,10 @@
     
     <!-- Projects Page -->
     <div id="projects-page" class="page active">
-        <div id="image-track" data-mouse-down-at="0" data-prev-percentage="0">
-        <!-- Images will be dynamically generated from projects.json -->
+        <div id="desk" class="desk" aria-label="Project cards. Drag to play, click or press Enter to open.">
+            <!-- .desk-card elements generated from projects.json -->
         </div>
-        <div class="counter" id="counter">
-            <span class="counter-number" id="current-number">1</span>
-            <span class="counter-separator"> - </span>
-            <span class="counter-number" id="total-number">0</span>
-        </div>
+        <p class="desk-hint" id="desk-hint"><span id="project-count">0</span> projects &middot; drag to play</p>
     </div>
     
     <!-- Project Detail Page -->
@@ -97,7 +93,13 @@
         </div>
     </div>
     
+    <div id="cat-companion" class="cat-companion" aria-hidden="true">(=^&middot;ω&middot;^=)</div>
+    <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
+
     <script src="loader-cat-frames.js"></script>
+    <script src="desk-physics.js"></script>
+    <script src="cat-companion.js"></script>
+    <script src="confetti.js"></script>
     <script src="portfolio-main.js"></script>
 </body>
 </html>
