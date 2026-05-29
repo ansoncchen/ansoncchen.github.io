@@ -11,6 +11,20 @@
     <script src="https://kit.fontawesome.com/99f26788e2.js" crossorigin="anonymous"></script>
 </head>
 <body>
+    <!-- Squigglevision filters (line boiling). JS flips the turbulence seed to make edges "boil". -->
+    <svg class="squiggle-defs" width="0" height="0" aria-hidden="true" focusable="false">
+        <defs>
+            <filter id="sq-soft" x="-6%" y="-6%" width="112%" height="112%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.022" numOctaves="2" seed="2" result="n"></feTurbulence>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="1.5" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+            </filter>
+            <filter id="sq" x="-10%" y="-10%" width="120%" height="120%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="2" result="n"></feTurbulence>
+                <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+            </filter>
+        </defs>
+    </svg>
+
     <!-- Loading Screen -->
     <div id="loading-screen" class="loading-screen">
         <div class="loader-container">
@@ -101,5 +115,6 @@
     <script src="cat-companion.js"></script>
     <script src="confetti.js"></script>
     <script src="portfolio-main.js"></script>
+    <script src="whimsy.js"></script>
 </body>
 </html>
