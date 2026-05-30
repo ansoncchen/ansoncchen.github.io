@@ -63,6 +63,7 @@
     "technologies": [
       "React",
       "FastAPI",
+      "XGBoost",
       "Google Cloud",
       "Docker",
       "Plotly",
@@ -107,6 +108,8 @@
       "PyTorch",
       "Core ML",
       "MobileViT",
+      "Adapters",
+      "FiLM",
       "BioCLIP2",
       "GeoTessera",
       "Apple Neural Engine"
@@ -157,8 +160,10 @@
       "PostgreSQL",
       "Pydantic",
       "nginx",
+      "systemd",
       "JWT",
-      "SAML 2.0"
+      "SAML 2.0",
+      "Shibboleth"
     ],
     "category": "research"
   },
@@ -178,6 +183,7 @@
     "technologies": [
       "React",
       "Atlassian Forge",
+      "Jira Cloud",
       "GeminiAPI",
       "Cytoscape.js",
       "Vite",
@@ -251,8 +257,11 @@
       "TypeScript",
       "React",
       "Vite",
+      "TipTap",
+      "react-markdown",
       "Express",
       "WebSocket",
+      "chokidar",
       "OpenAI API",
       "VS Code API"
     ],
