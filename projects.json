@@ -25,8 +25,9 @@
     "id": "datect-oad",
     "title": "DATect: Ocean Anomaly Detection",
     "description": "Most forecasting models look at one monitoring site at a time. **Ocean Anomaly Detection (OAD)** takes the opposite approach: it learns what a healthy coastal ocean normally looks like, then flags the moment that picture starts to break down.\n\n## The idea\n\nOAD is a **3D convolutional autoencoder**, a neural network that compresses satellite imagery of the whole coastal ocean down to a small code and then rebuilds it. Trained on 22 years of four-channel `MODIS` imagery (chlorophyll, sea-surface temperature, fluorescence, and related ocean-color bands), it gets so good at reconstructing normal conditions that anything it *can't* rebuild cleanly stands out as an anomaly, which is often the earliest visible sign of a developing bloom.\n\n## Why it's a hard problem\n\nSatellite data is full of holes, since clouds and sensor gaps leave missing pixels all over each image. OAD uses **masked convolutions** so the network skips those gaps instead of inventing values to fill them. It also works in 3D, across latitude, longitude, and time, so it can see how a region changes rather than just how it looks in a single snapshot.\n\n## The result\n\nAcross a range of forecast lead times, OAD was the **only method that held a positive R² at a 7-day lead**, meaning it still carried real predictive signal a full week out, where simpler approaches had already faded into noise.",
-    "carouselImage": "oad_study_region.webp",
+    "carouselImage": "oad_composite.webp",
     "images": [
+      "oad_composite.webp",
       "oad_study_region.webp",
       "oad_architecture.webp",
       "oad_forecastability.webp",
@@ -116,8 +117,9 @@
     "id": "crab-cvat",
     "title": "Snow Crab Behavior Tracking",
     "description": "Snow crab get sorted by the millions aboard Bering Sea fishing vessels, and how they move on the table says a lot about which handling setups stress them least. This project turns overhead tank video of crabs into quantitative behavior data.\n\n## Annotating the video\n\nEvery crab in every frame gets labeled in **CVAT** with a bounding box around the body plus an **orientation skeleton**, two keypoints marking head and tail, so the data records both where a crab is and which way it is facing. The annotations export in **Datumaro** format and feed a pipeline that links the per-frame labels into continuous trajectories.\n\n## Measuring orientation carefully\n\nI built the **orientation scoring** that grades how well a predicted heading matches the truth. A crab's heading is directed, so mixing up head and tail is a full 180° error rather than a small miss, and the metric has to penalize those flips correctly. I also wrote the **inter-annotator agreement** analysis, which checks whether two people labeling the same clip actually agree and is what tells you the labels can be trusted.\n\n## From tracks to behavior\n\nFurther down the pipeline, the trajectories feed **escape-attempt detection** and a **correlated random walk** model of how crabs explore the tank, turning the raw video into the step-length and turning-angle distributions biologists use to compare treatments.",
-    "carouselImage": "crab_cvat.webp",
+    "carouselImage": "crab_cvat_tool.webp",
     "images": [
+      "crab_cvat_tool.webp",
       "crab_cvat.webp"
     ],
     "links": {
@@ -138,8 +140,9 @@
     "id": "zaphd-logbook",
     "title": "ZAP-HD Fusion Logbook",
     "description": "**ZAP-HD** is a sheared-flow Z-pinch fusion experiment at the University of Washington. The logbook researchers use to record and review every shot was an old **PHP 4** application running on Apache and Ubuntu 18.04, with raw SQL wired straight into the pages. I rebuilt it from the ground up.\n\n## The new stack\n\nA **SvelteKit + TypeScript** frontend talks to a **FastAPI** backend over **PostgreSQL**, with **Pydantic** validating every request and response. The TypeScript side gives the logbook a fast, type-safe UI, and the Python API keeps the data model strict and self-documenting.\n\n## Logging in with UW NetID\n\nAuthentication is **JWT**-based and tied into UW NetID single sign-on. Getting there meant migrating the old **CAS** flow to **SAML 2.0** against UW's **Shibboleth** identity provider, so people's existing university accounts just work without a separate password.\n\n## Shipping it securely\n\n`nginx` terminates **TLS on port 443** with an InCommon certificate, the SvelteKit (Node, :3000) and FastAPI (:8081) services run under `systemd`, and deploys go out over SSH deploy keys. It lives at zaphd-logbook.aa.uw.edu.",
-    "carouselImage": "zaphd_architecture.svg",
+    "carouselImage": "zaphd_logbook.webp",
     "images": [
+      "zaphd_logbook.webp",
       "zaphd_architecture.svg"
     ],
     "links": {
