@@ -86,18 +86,44 @@
   let cards = [];          // { el, id, x, y, ... , homeX, homeY, baseRot }
   let onOpen = null;
 
+  // Project-type legend: label + fixed display order. Only categories that
+  // actually appear in the data are rendered (see buildLegend).
+  const CATEGORY_META = {
+    research: 'Research',
+    internship: 'Internship',
+    hackathon: 'Hackathon',
+    personal: 'Personal project',
+  };
+  const CATEGORY_ORDER = ['research', 'internship', 'hackathon', 'personal'];
+
   function buildCard(project, index) {
     const el = document.createElement('button');
     el.type = 'button';
     el.className = 'desk-card';
     el.dataset.projectId = project.id;
     el.dataset.index = String(index);
+    if (project.category) el.dataset.category = project.category;
     el.setAttribute('aria-label', 'Open project: ' + project.title);
     el.innerHTML =
       '<span class="desk-card__frame"><img class="desk-card__img" src="' +
       project.carouselImage + '" alt="" draggable="false"></span>' +
       '<span class="desk-card__label">' + project.title + '</span>';
     return el;
+  }
+
+  function buildLegend(projects) {
+    const present = {};
+    projects.forEach((p) => { if (p.category) present[p.category] = true; });
+    const used = CATEGORY_ORDER.filter((c) => present[c]);
+    if (used.length < 2) return null; // a single category needs no key
+    const key = document.createElement('ul');
+    key.className = 'desk-key';
+    key.setAttribute('aria-label', 'Project type legend');
+    key.innerHTML = used.map((c) =>
+      '<li class="desk-key__item"><span class="desk-key__dot" data-category="' +
+      c + '"></span>' + CATEGORY_META[c] + '</li>'
+    ).join('');
+    return key;
   }
 
   function layoutCards() {
@@ -179,6 +205,8 @@
       attachDrag(card);
       return card;
     });
+    const legend = buildLegend(projects);
+    if (legend) desk.appendChild(legend);
     layoutCards();
     window.addEventListener('resize', layoutCards);
     startLoop();

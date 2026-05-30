@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#7a7a82"/>
+    </marker>
+  </defs>
+
+  <!-- background + panel -->
+  <rect x="0" y="0" width="1200" height="800" fill="#0e0e11"/>
+  <rect x="28" y="28" width="1144" height="744" rx="18" fill="none" stroke="#26262d" stroke-width="1.5"/>
+
+  <!-- title -->
+  <text x="600" y="86" text-anchor="middle" fill="#ECECEC" font-size="40" font-weight="700">ZAP HD Fusion Logbook</text>
+  <text x="600" y="124" text-anchor="middle" fill="#7a7a82" font-size="20">legacy PHP 4  &#8594;  FastAPI &#183; SvelteKit &#183; nginx</text>
+
+  <!-- request pipeline (centered column) -->
+  <!-- box 1: client -->
+  <rect x="370" y="160" width="460" height="62" rx="10" fill="#15151a" stroke="#FF7EA6" stroke-width="1.5"/>
+  <text x="392" y="180" fill="#FF7EA6" font-size="13" font-weight="700">CLIENT</text>
+  <text x="600" y="204" text-anchor="middle" fill="#ECECEC" font-size="20">Browser &#183; UW NetID SSO</text>
+
+  <line x1="600" y1="222" x2="600" y2="258" stroke="#7a7a82" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- box 2: nginx -->
+  <rect x="370" y="260" width="460" height="62" rx="10" fill="#15151a" stroke="#FFD56B" stroke-width="1.5"/>
+  <text x="392" y="280" fill="#FFD56B" font-size="13" font-weight="700">PROXY</text>
+  <text x="600" y="304" text-anchor="middle" fill="#ECECEC" font-size="20">nginx &#183; TLS :443 &#183; InCommon cert</text>
+
+  <line x1="600" y1="322" x2="600" y2="358" stroke="#7a7a82" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- box 3: sveltekit -->
+  <rect x="370" y="360" width="460" height="62" rx="10" fill="#15151a" stroke="#EAF7F1" stroke-width="1.5"/>
+  <text x="392" y="380" fill="#EAF7F1" font-size="13" font-weight="700">FRONTEND</text>
+  <text x="600" y="404" text-anchor="middle" fill="#ECECEC" font-size="20">SvelteKit + TypeScript &#183; Node :3000</text>
+
+  <line x1="600" y1="422" x2="600" y2="458" stroke="#7a7a82" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- box 4: fastapi -->
+  <rect x="370" y="460" width="460" height="62" rx="10" fill="#15151a" stroke="#FF7EA6" stroke-width="1.5"/>
+  <text x="392" y="480" fill="#FF7EA6" font-size="13" font-weight="700">API</text>
+  <text x="600" y="504" text-anchor="middle" fill="#ECECEC" font-size="20">FastAPI &#183; JWT &#183; Pydantic :8081</text>
+
+  <line x1="600" y1="522" x2="600" y2="558" stroke="#7a7a82" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- box 5: postgres -->
+  <rect x="370" y="560" width="460" height="62" rx="10" fill="#15151a" stroke="#FFD56B" stroke-width="1.5"/>
+  <text x="392" y="580" fill="#FFD56B" font-size="13" font-weight="700">DB</text>
+  <text x="600" y="604" text-anchor="middle" fill="#ECECEC" font-size="20">PostgreSQL &#183; zaphdlogbook</text>
+
+  <!-- legacy callout (left) -->
+  <rect x="62" y="396" width="232" height="120" rx="10" fill="none" stroke="#3a3a42" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <text x="178" y="428" text-anchor="middle" fill="#7a7a82" font-size="13" font-weight="700">LEGACY</text>
+  <text x="178" y="456" text-anchor="middle" fill="#9a9aa2" font-size="17">PHP 4 &#183; Apache</text>
+  <text x="178" y="482" text-anchor="middle" fill="#9a9aa2" font-size="17">Ubuntu 18.04</text>
+  <text x="178" y="504" text-anchor="middle" fill="#5f5f66" font-size="14">raw SQL pages</text>
+  <line x1="296" y1="456" x2="366" y2="486" stroke="#FF7EA6" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="318" y="446" fill="#FF7EA6" font-size="14">rebuilt</text>
+
+  <!-- auth callout (right) -->
+  <rect x="908" y="436" width="232" height="110" rx="10" fill="none" stroke="#FF7EA6" stroke-width="1.5" stroke-dasharray="5 5"/>
+  <text x="1024" y="466" text-anchor="middle" fill="#FF7EA6" font-size="13" font-weight="700">AUTH</text>
+  <text x="1024" y="494" text-anchor="middle" fill="#ECECEC" font-size="18">CAS &#8594; SAML 2.0</text>
+  <text x="1024" y="518" text-anchor="middle" fill="#9a9aa2" font-size="15">UW Shibboleth IdP</text>
+  <line x1="906" y1="491" x2="832" y2="491" stroke="#7a7a82" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- footer tech strip -->
+  <text x="600" y="704" text-anchor="middle" fill="#7a7a82" font-size="17">JWT auth &#183; Pydantic validation &#183; systemd services &#183; InCommon TLS &#183; deploy keys</text>
+  <text x="600" y="734" text-anchor="middle" fill="#5f5f66" font-size="14">zaphd-logbook.aa.uw.edu</text>
+</svg>

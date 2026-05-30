@@ -2,40 +2,80 @@
   {
     "id": "datect-forecasts",
     "title": "DATect: ML Algal Bloom Forecasts",
-    "description": "DATect is a machine learning system for forecasting domoic acid (DA) toxin concentrations from harmful algal blooms along the Pacific Coast that ingests 21 years of satellite oceanographic data (MODIS chlorophyll, SST, fluorescence), climate indices (PDO, ONI, BEUTI), streamflow, and ground-truth DA measurements across 10 Washington/Oregon monitoring sites; processes and aligns this data into weekly time series with built-in temporal safeguards (7-day satellite delay, 2-month climate reporting lag) to prevent data leakage; trains XGBoost models for either regression (continuous DA concentration) or classification (Low/Moderate/High/Extreme risk categories); and enforces strict chronological train/test splits with per-forecast category creation to ensure scientifically valid retrospective evaluation, achieving approximately 0.43 R² for regression and 78% accuracy for classification.",
-    "carouselImage": "domoic acid research.png",
+    "description": "**Domoic acid** is a neurotoxin made by harmful algal blooms off the Pacific Coast. When it spikes, it closes crab and shellfish fisheries and can poison people and sea lions, but managers usually only find out *after* it has reached the food web. DATect forecasts those spikes a week in advance.\n\n## What it does\n\nThe model pulls together 21 years of data from several sources: satellite readings of ocean color, temperature, and plankton fluorescence (NASA `MODIS`); climate signals like PDO, ONI, and BEUTI upwelling; river streamflow; and measured toxin samples from 10 monitoring sites in Washington and Oregon. All of it is aligned into weekly time series, and an `XGBoost` model learns to predict next week's toxin level, either as a number (regression) or as a risk level of Low, Moderate, High, or Extreme (classification).\n\n## Not letting the model cheat\n\nForecasting is easy to fake. If a model gets to peek at data it would not actually have yet, it looks great in testing and then falls apart in the real world. DATect avoids that. Satellite data is treated as arriving 7 days late and climate indices 2 months late, matching their real reporting lags, and the data is split by time rather than shuffled at random, so the model always trains on the past and is tested on the future. The evaluation ends up being a fair stand-in for forecasting blind.\n\n## How well it works\n\nUnder that strict temporal holdout, DATect reaches an **R² of 0.315** and catches **85.9% of real toxin spikes**, about **434% better** than the 'next week looks like this week' persistence baseline managers rely on today.",
+    "carouselImage": "domoic acid research.webp",
     "images": [
-      "domoic acid research.png"
+      "domoic acid research.webp"
     ],
     "links": {
       "demo": "",
       "github": "https://github.com/ansoncchen/DATect-Forecasting-Domoic-Acid",
       "website": ""
     },
-    "technologies": ["Python", "XGBoost", "Scikit-learn", "Pandas", "Hyperopt"]
+    "technologies": [
+      "Python",
+      "XGBoost",
+      "Scikit-learn",
+      "Pandas",
+      "Hyperopt"
+    ],
+    "category": "research"
+  },
+  {
+    "id": "datect-oad",
+    "title": "DATect: Ocean Anomaly Detection",
+    "description": "Most forecasting models look at one monitoring site at a time. **Ocean Anomaly Detection (OAD)** takes the opposite approach: it learns what a healthy coastal ocean normally looks like, then flags the moment that picture starts to break down.\n\n## The idea\n\nOAD is a **3D convolutional autoencoder**, a neural network that compresses satellite imagery of the whole coastal ocean down to a small code and then rebuilds it. Trained on 22 years of four-channel `MODIS` imagery (chlorophyll, sea-surface temperature, fluorescence, and related ocean-color bands), it gets so good at reconstructing normal conditions that anything it *can't* rebuild cleanly stands out as an anomaly, which is often the earliest visible sign of a developing bloom.\n\n## Why it's a hard problem\n\nSatellite data is full of holes, since clouds and sensor gaps leave missing pixels all over each image. OAD uses **masked convolutions** so the network skips those gaps instead of inventing values to fill them. It also works in 3D, across latitude, longitude, and time, so it can see how a region changes rather than just how it looks in a single snapshot.\n\n## The result\n\nAcross a range of forecast lead times, OAD was the **only method that held a positive R² at a 7-day lead**, meaning it still carried real predictive signal a full week out, where simpler approaches had already faded into noise.",
+    "carouselImage": "oad_study_region.webp",
+    "images": [
+      "oad_study_region.webp",
+      "oad_architecture.webp",
+      "oad_forecastability.webp",
+      "oad_leadtime.webp"
+    ],
+    "links": {
+      "demo": "",
+      "github": "https://github.com/ansoncchen/DATect-Forecasting-Domoic-Acid",
+      "website": ""
+    },
+    "technologies": [
+      "PyTorch",
+      "Convolutional Autoencoder",
+      "NumPy",
+      "Xarray",
+      "Remote Sensing"
+    ],
+    "category": "research"
   },
   {
     "id": "datect-app",
     "title": "DATect: Full-Stack Cloud Application",
-    "description": "DATect is a React + FastAPI web application for interactive domoic acid forecasting and oceanographic data visualization, featuring a dashboard with real-time single-site predictions (regression for continuous μg/g values or classification for Low/Moderate/High/Extreme risk levels) complete with bootstrap confidence intervals, XGBoost feature importance, and gradient uncertainty visualizations; a retrospective analysis mode that evaluates 500+ historical forecasts through actual vs. predicted scatter plots, time series comparisons, and comprehensive per-site/per-class metrics (R², MAE, F1, accuracy); a historical analysis page offering six visualization types including correlation heatmaps, Sobol sensitivity indices, DA vs. Pseudo-nitzschia comparisons, waterfall plots, spectral/frequency analysis, and an interactive Pacific Coast site map; and interactive Plotly.js charts with hover tooltips, downloadable exports, and site filtering, all presented within a responsive Tailwind CSS interface.",
-    "carouselImage": "domoic acid app.png",
+    "description": "A trained model is only useful if someone can actually *use* it, so this is the web app that puts DATect in front of fishery managers and researchers. It is a **React + FastAPI** application deployed on **Google Cloud**.\n\n## The forecast dashboard\n\nPick a site and you get next week's prediction with bootstrap confidence intervals, the `XGBoost` features driving it, and a plain-language risk readout (Low, Moderate, High, or Extreme). You can switch between regression for continuous μg/g values and classification for risk tiers.\n\n## Looking back to build trust\n\nA retrospective mode replays 500+ past forecasts as predicted-vs-actual scatter plots and time series, with full per-site and per-class metrics (R², MAE, F1, accuracy), so it is clear exactly where the model is reliable and where it is not.\n\n## Exploring the data\n\nA historical analysis page has correlation heatmaps, Sobol sensitivity indices, domoic-acid-vs-Pseudo-nitzschia comparisons, waterfall plots, spectral analysis, and an interactive Pacific Coast site map. Everything renders as interactive **Plotly.js** charts you can hover, filter by site, and export, all inside a responsive **Tailwind CSS** layout.",
+    "carouselImage": "domoic acid app.webp",
     "images": [
-      "domoic acid app.png"
+      "domoic acid app.webp"
     ],
     "links": {
       "demo": "",
       "github": "https://github.com/ansoncchen/DATect-Forecasting-Domoic-Acid",
       "website": ""
     },
-    "technologies": ["React", "FastAPI", "Google Cloud", "Docker", "Plotly"]
+    "technologies": [
+      "React",
+      "FastAPI",
+      "Google Cloud",
+      "Docker",
+      "Plotly",
+      "Tailwind CSS"
+    ],
+    "category": "research"
   },
   {
     "id": "datect-award",
     "title": "DATect: Research Awards",
-    "description": "Received the 2024 ISEF Grand Award and 2025 STS Scholar for my work on DATect",
-    "carouselImage": "ISEF.png",
+    "description": "My work on **DATect** was recognized at two of the most selective science competitions in the country.\n\n## The awards\n\nI won a **2024 ISEF Grand Award** at the International Science and Engineering Fair, the largest pre-college science competition in the world, and was named a **2025 Regeneron Science Talent Search Scholar**, STS being the oldest science competition in the United States.\n\n## What it recognized\n\nBoth came from the domoic-acid forecasting work behind DATect: a leak-free machine-learning pipeline that predicts toxic algal blooms along the Pacific Coast a week ahead, giving fishery managers the kind of early warning they do not have today.",
+    "carouselImage": "ISEF.webp",
     "images": [
-      "ISEF.png"
+      "ISEF.webp"
     ],
     "links": {
       "demo": "https://isef.net/project/eaev057-forecasting-domoic-acid-in-the-pacific-northwest",
@@ -43,37 +83,176 @@
       "website": "https://www.nanoos.org/news/index.php?item=HabPredictionModelAward250226",
       "poster": "https://washacad.org/wp-content/uploads/2024/09/Anson-Cs-Poster-Anson-Chen.pdf"
     },
-    "technologies": []
+    "technologies": [],
+    "category": "research"
+  },
+  {
+    "id": "geo-species",
+    "title": "Geo-Aware Species Recognition",
+    "description": "Two birds can look almost identical in a photo, but where the photo was taken often settles which species it actually is. This research builds species classifiers that combine **what the camera sees** with **where you are**, and runs the whole thing on a phone in under 50 milliseconds.\n\n## Getting vision and geography to talk\n\nImage models and geospatial models normally do not share a common language. I align **GeoTessera** location embeddings (a learned numeric fingerprint for any point on Earth) with **BioCLIP2** image embeddings so a place and a photo can be compared in the same space, which lets location act as real evidence for which species is plausible.\n\n## Conditioning instead of retraining\n\nThe classifier uses a small **MobileViT** vision backbone steered by lightweight **adapter** and **FiLM** layers. Instead of retraining a whole network for each region, these small modules adjust the model based on the location embedding, which is cheap to train and easy to extend to new areas.\n\n## Built for the edge\n\nCompiled to **Core ML**, the model runs on the **Apple Neural Engine** in under 50 ms. Identification happens offline, in the field, with no server round-trip, so it feels instant in a live camera view.",
+    "carouselImage": "research_endemic.webp",
+    "images": [
+      "research_geo_alignment.webp",
+      "research_cosine_heatmap.webp",
+      "research_resolution_sweep.webp",
+      "research_endemic.webp"
+    ],
+    "links": {
+      "demo": "",
+      "github": "",
+      "website": ""
+    },
+    "technologies": [
+      "PyTorch",
+      "Core ML",
+      "MobileViT",
+      "BioCLIP2",
+      "GeoTessera",
+      "Apple Neural Engine"
+    ],
+    "category": "research"
+  },
+  {
+    "id": "crab-cvat",
+    "title": "Snow Crab Behavior Tracking",
+    "description": "Snow crab get sorted by the millions aboard Bering Sea fishing vessels, and how they move on the table says a lot about which handling setups stress them least. This project turns overhead tank video of crabs into quantitative behavior data.\n\n## Annotating the video\n\nEvery crab in every frame gets labeled in **CVAT** with a bounding box around the body plus an **orientation skeleton**, two keypoints marking head and tail, so the data records both where a crab is and which way it is facing. The annotations export in **Datumaro** format and feed a pipeline that links the per-frame labels into continuous trajectories.\n\n## Measuring orientation carefully\n\nI built the **orientation scoring** that grades how well a predicted heading matches the truth. A crab's heading is directed, so mixing up head and tail is a full 180° error rather than a small miss, and the metric has to penalize those flips correctly. I also wrote the **inter-annotator agreement** analysis, which checks whether two people labeling the same clip actually agree and is what tells you the labels can be trusted.\n\n## From tracks to behavior\n\nFurther down the pipeline, the trajectories feed **escape-attempt detection** and a **correlated random walk** model of how crabs explore the tank, turning the raw video into the step-length and turning-angle distributions biologists use to compare treatments.",
+    "carouselImage": "crab_cvat.webp",
+    "images": [
+      "crab_cvat.webp"
+    ],
+    "links": {
+      "demo": "",
+      "github": "",
+      "website": ""
+    },
+    "technologies": [
+      "Python",
+      "CVAT",
+      "Datumaro",
+      "NumPy",
+      "Computer Vision"
+    ],
+    "category": "research"
+  },
+  {
+    "id": "zaphd-logbook",
+    "title": "ZAP-HD Fusion Logbook",
+    "description": "**ZAP-HD** is a sheared-flow Z-pinch fusion experiment at the University of Washington. The logbook researchers use to record and review every shot was an old **PHP 4** application running on Apache and Ubuntu 18.04, with raw SQL wired straight into the pages. I rebuilt it from the ground up.\n\n## The new stack\n\nA **SvelteKit + TypeScript** frontend talks to a **FastAPI** backend over **PostgreSQL**, with **Pydantic** validating every request and response. The TypeScript side gives the logbook a fast, type-safe UI, and the Python API keeps the data model strict and self-documenting.\n\n## Logging in with UW NetID\n\nAuthentication is **JWT**-based and tied into UW NetID single sign-on. Getting there meant migrating the old **CAS** flow to **SAML 2.0** against UW's **Shibboleth** identity provider, so people's existing university accounts just work without a separate password.\n\n## Shipping it securely\n\n`nginx` terminates **TLS on port 443** with an InCommon certificate, the SvelteKit (Node, :3000) and FastAPI (:8081) services run under `systemd`, and deploys go out over SSH deploy keys. It lives at zaphd-logbook.aa.uw.edu.",
+    "carouselImage": "zaphd_architecture.svg",
+    "images": [
+      "zaphd_architecture.svg"
+    ],
+    "links": {
+      "demo": "",
+      "github": "",
+      "website": ""
+    },
+    "technologies": [
+      "SvelteKit",
+      "TypeScript",
+      "FastAPI",
+      "PostgreSQL",
+      "Pydantic",
+      "nginx",
+      "JWT",
+      "SAML 2.0"
+    ],
+    "category": "research"
   },
   {
     "id": "codegraph",
     "title": "CodeGraph",
-    "description": "CodeGraph was a hackathon project (DubHacks 2025) that creates an AI-powered codebase knowledge graph for team collaboration. It's built as an Atlassian Forge app for Jira Cloud that allows users to paste a GitHub repository URL, analyzes the codebase and generates an interactive knowledge graph, visualizes relationships between code artifacts, people, and events (dependencies, reviews, authorship, etc.), and displays directly inside Jira project pages as an Obsidian-style graph interface.",
-    "carouselImage": "code graph.png",
+    "description": "**CodeGraph** was our **DubHacks 2025** hackathon project: a tool that turns a codebase into an explorable knowledge graph, so a team can see how their code, people, and history fit together without digging through files one by one.\n\n## What it does\n\nYou paste a GitHub repository URL, CodeGraph analyzes the code, and it draws an interactive, Obsidian-style graph: nodes for files, functions, contributors, and events, with edges for the relationships between them like dependencies, code reviews, and authorship. From the graph you can tell who owns which parts, what depends on what, and where a team's knowledge is concentrated.\n\n## How it's built\n\nIt is an **Atlassian Forge** app that runs inside **Jira Cloud** project pages, so the graph sits where the team already works. A **Gemini**-powered layer pulls out the relationships, an **MCP** server connects the model to repository data, and **Cytoscape.js** draws the graph in a **React** front end.",
+    "carouselImage": "code graph.webp",
     "images": [
-      "code graph.png"
+      "code graph.webp"
     ],
     "links": {
       "demo": "https://devpost.com/software/directedacycliccodebase",
       "github": "https://github.com/CosmicOdyssey/DubHacks-2025/",
       "website": ""
     },
-    "technologies": ["React", "Atlassian Forge", "GeminiAPI", "Cytoscape.js", "Vite", "Node.js", "MCP"]
+    "technologies": [
+      "React",
+      "Atlassian Forge",
+      "GeminiAPI",
+      "Cytoscape.js",
+      "Vite",
+      "Node.js",
+      "MCP"
+    ],
+    "category": "hackathon"
   },
   {
     "id": "portfolio-website",
     "title": "Portfolio Website",
-    "description": "A minimalist portfolio website inspired by \"Award Winning Animation With Only 20 Lines Of CSS?\" by Hyperplexed.",
-    "carouselImage": "Website.png",
+    "description": "**This is that site.** It is a portfolio with no framework behind it, just **HTML, CSS, and vanilla JavaScript** served from **GitHub Pages**.\n\n## The desk\n\nProjects sit on a draggable 'desk' of cards you can grab, throw, and watch collide, driven by a small physics loop I wrote by hand. A cat follows your cursor, confetti goes off when you open a project, and the card edges have a hand-drawn 'squigglevision' wobble made by animating an SVG turbulence filter. Every card is generated from one `projects.json` file, so adding a project is a data edit instead of a code change. The animated intro was inspired by Hyperplexed's *Award Winning Animation With Only 20 Lines Of CSS?*\n\n## Hidden easter eggs\n\nPressing the backtick key opens a fake terminal that runs some genuinely real things in the browser. There is **Conway's Game of Life** and a zoomable **Mandelbrot set** drawn as live ASCII, a `dig` command that does real **DNS-over-HTTPS** lookups, an `ip` command that geolocates your connection, a `mine` command that runs actual **SHA-256 proof-of-work** in a **Web Worker** so the page never freezes, and a `synth` command that plays a **Web Audio** chiptune with a live frequency spectrum. Open the site in two tabs and the cursors find each other as 'ghost cats' over a **BroadcastChannel**. There is also a Konami code, a desk-warping mode, and small `localStorage` counters tracking what you have done.\n\n## Why build it this way\n\nNo build step, no dependencies, and it still loads fast. The whole thing is meant to be poked at, so most of the fun stays hidden until you go looking for it.",
+    "carouselImage": "Website.webp",
     "images": [
-      "Website.png"
+      "Website.webp"
     ],
     "links": {
       "demo": "",
       "github": "https://github.com/ansoncchen/ansoncchen.github.io",
       "website": "https://ansoncchen.github.io"
     },
-    "technologies": ["HTML", "CSS", "JavaScript", "GitHub Pages"]
+    "technologies": [
+      "HTML",
+      "CSS",
+      "JavaScript",
+      "GitHub Pages",
+      "Web Audio API",
+      "Web Workers",
+      "BroadcastChannel",
+      "SVG Filters",
+      "Canvas"
+    ],
+    "category": "personal"
+  },
+  {
+    "id": "gamechangineer",
+    "title": "GameChangineer",
+    "description": "**GameChangineer** is an educational platform from **Virginia Tech's ECE department** that lets students build real, playable games by describing them in plain English. You can type something like 'make the cat jump when I press space, and lose if a fox touches it,' and the platform turns that sentence into a working game, with no syntax to memorize and no blocks to drag.\n\n## The bigger idea\n\nThe goal is to teach 'AI-native' skills: creativity, thinking critically about what an AI gives back, and prompt engineering, meaning how to phrase a request so the AI builds what you actually meant. A student writes the rules in natural language and the platform turns them into a running game with sprites, movement, collisions, scoring, and win or lose conditions, so getting to a first working game can take just one sentence. It runs entirely in the browser with a Google sign-in and no install, and it is used in classrooms and **Hour of AI / Code** events.\n\n## The tech\n\nThe platform is **AI-native**: an **LLM** reads the natural-language description and generates the game logic, which then runs as a playable 2D game in the browser. Because the loop goes straight from a written prompt to a game you can play, it doubles as a hands-on way to practice **prompt engineering**.\n\n## What I worked on\n\nI helped by playtesting and giving feedback, building games the way a student would, finding where the natural-language interpretation broke down or surprised me, and passing along what felt confusing so the team could tighten it up.",
+    "carouselImage": "gamechangineer.webp",
+    "images": [
+      "gamechangineer.webp"
+    ],
+    "links": {
+      "demo": "",
+      "github": "",
+      "website": "https://gc.ece.vt.edu/home/"
+    },
+    "technologies": [
+      "LLM",
+      "Prompt Engineering",
+      "Natural Language",
+      "Game-Based Learning",
+      "Web Platform"
+    ],
+    "category": "research"
+  },
+  {
+    "id": "codetations",
+    "title": "Codetations / Magic Markup",
+    "description": "**Codetations** (also called Magic Markup) is a research project aimed at a frustrating problem: notes you attach to code, like a comment, a proof, or a code-review remark, tend to break the moment the code around them changes. Codetations keeps annotations attached to the right code as the file changes, instead of letting them drift to the wrong line after the next edit. It comes out of research on robust metadata anchoring for source code and ships as a **VS Code extension** for 'rich code annotations.'\n\n## How the project works\n\nThe system splits into a few pieces. A **document server** streams the live file over a **WebSocket**, a **state server** keeps a JSON file where each annotation is stored on its own along with the text it was anchored to, and a stateless **retagging function** re-locates every annotation whenever the document changes, using an **LLM** to re-anchor when the original text is no longer an exact match. A note placed on line 5 still lands on the right code even after lines above it are added, removed, or rewritten.\n\n## The tech stack\n\nThe extension itself is **TypeScript** on the **VS Code API**, with an **Express** and **WebSocket** backend for the document and state servers and `chokidar` watching files for changes. Retagging calls the **OpenAI API**. The annotation panel is a **React 18** webview built with **Vite**, using `react-markdown` and a TipTap rich-text editor to render notes, and it hooks into **GitHub Copilot Chat** as an extension dependency.\n\n## What I contributed\n\nI worked on the extension's **webview UI**, fixing rendering bugs in the annotation tools and reworking the **Annotation Generator** so it handles **Markdown** properly, which makes the panel that creates and shows annotations behave correctly.",
+    "carouselImage": "magic_markup.webp",
+    "images": [
+      "magic_markup.webp"
+    ],
+    "links": {
+      "demo": "",
+      "github": "https://github.com/elmisback/magic-markup",
+      "website": ""
+    },
+    "technologies": [
+      "TypeScript",
+      "React",
+      "Vite",
+      "Express",
+      "WebSocket",
+      "OpenAI API",
+      "VS Code API"
+    ],
+    "category": "research"
   }
 ]
-
