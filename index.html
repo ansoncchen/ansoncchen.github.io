@@ -107,6 +107,18 @@
         </div>
     </div>
     
+    <a class="now-playing" id="now-playing" target="_blank" rel="noopener" hidden aria-live="polite" aria-label="Now playing on Last.fm">
+        <span class="now-playing-art-wrap">
+            <img class="now-playing-art" id="np-art" alt="" />
+            <span class="now-playing-eq" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+        </span>
+        <span class="now-playing-meta">
+            <span class="now-playing-label" id="np-label">last played</span>
+            <span class="now-playing-track" id="np-track"></span>
+            <span class="now-playing-artist" id="np-artist"></span>
+        </span>
+    </a>
+
     <div id="cat-companion" class="cat-companion" aria-hidden="true">(=^&middot;ω&middot;^=)</div>
     <canvas id="confetti-canvas" class="confetti-canvas" aria-hidden="true"></canvas>
 
@@ -115,6 +127,7 @@
     <script src="cat-companion.js"></script>
     <script src="confetti.js"></script>
     <script src="portfolio-main.js"></script>
+    <script src="now-playing.js"></script>
     <script src="whimsy.js"></script>
 </body>
 </html>
