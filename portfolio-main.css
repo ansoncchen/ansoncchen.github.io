@@ -1052,9 +1052,18 @@ body {
   .desk {
     position: absolute;
     inset: 0;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
     background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 26px 26px;
+  }
+
+  /* Sized by JS to the layout height so the desk can scroll past the viewport. */
+  .desk-spacer {
+    position: relative;
+    width: 100%;
+    pointer-events: none;
   }
 
   .desk-card {

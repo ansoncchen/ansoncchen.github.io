@@ -11,14 +11,20 @@
     return x - Math.floor(x);
   }
 
-  // Loose centered grid; returns [{x, y, rot}] in px (card-center coordinates).
+  // Loose grid with guaranteed spacing. Rows keep a fixed height so cards never
+  // overlap; when the block is taller than the viewport the desk scrolls.
+  // Returns [{x, y, rot}] in px (card-center coords) with a `.contentHeight` prop.
   function computeLayout(count, vw, vh, cardW, cardH) {
     const cols = Math.max(1, Math.min(count, Math.floor(vw / (cardW * 1.35)) || 1));
     const rows = Math.ceil(count / cols);
     const cellW = vw / cols;
-    const usableH = vh - 160; // leave room for nav (top) + hint (bottom)
-    const cellH = Math.min(cardH * 1.5, usableH / rows);
-    const startY = (vh - rows * cellH) / 2 + cellH / 2;
+    const cellH = cardH * 1.5;        // fixed row pitch — ~85px vertical breathing room
+    const topPad = 96;                // clearance under the nav
+    const botPad = 88;                // clearance above the hint
+    const blockH = rows * cellH;
+    const fits = topPad + blockH + botPad <= vh;
+    // Center the block when it all fits; otherwise top-align and let it scroll.
+    const startY = fits ? (vh - blockH) / 2 + cellH / 2 : topPad + cellH / 2;
     const positions = [];
     for (let i = 0; i < count; i++) {
       const r = Math.floor(i / cols);
@@ -26,11 +32,13 @@
       const itemsInRow = (r === rows - 1) ? (count - cols * r) : cols;
       const rowStartX = (vw - itemsInRow * cellW) / 2 + cellW / 2;
       positions.push({
-        x: rowStartX + c * cellW + (deterministicJitter(i) - 0.5) * cellW * 0.16,
-        y: startY + r * cellH + (deterministicJitter(i + 99) - 0.5) * cellH * 0.16,
+        x: rowStartX + c * cellW + (deterministicJitter(i) - 0.5) * cellW * 0.12,
+        y: startY + r * cellH + (deterministicJitter(i + 99) - 0.5) * cellH * 0.12,
         rot: (deterministicJitter(i + 7) - 0.5) * 10, // base rotation in deg (~±5)
       });
     }
+    // Total scrollable height (>= viewport so the centered case never scrolls).
+    positions.contentHeight = Math.max(vh, topPad + blockH + botPad);
     return positions;
   }
 
@@ -72,8 +80,52 @@
     return card;
   }
 
+  // Push overlapping cards apart along the axis of least penetration (AABB).
+  // opts = { minDX, minDY, push, vel, slop }. A card with `dragging` is
+  // immovable, so it shoves neighbors aside without being pushed back.
+  //
+  // Soft constraint: each frame we correct only `push` of the remaining overlap
+  // (beyond a `slop` band) and bleed a little of that into velocity. Cards ease
+  // apart over several frames instead of snapping, which keeps the motion smooth
+  // and lets the home-spring + bob carry the settle rather than fighting a hard
+  // teleport. `slop` ignores sub-pixel overlaps so neighbors don't micro-jitter.
+  function resolveCollisions(list, opts) {
+    const minDX = opts.minDX, minDY = opts.minDY;
+    const push = opts.push, vel = opts.vel, slop = opts.slop || 0;
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b = list[j];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const ox = minDX - Math.abs(dx); // overlap on x
+        const oy = minDY - Math.abs(dy); // overlap on y
+        if (ox <= 0 || oy <= 0) continue; // boxes clear on at least one axis
+        const aMov = a.dragging ? 0 : 1;
+        const bMov = b.dragging ? 0 : 1;
+        const tot = aMov + bMov;
+        if (tot === 0) continue; // both pinned (can't happen with one pointer)
+        if (ox < oy) {
+          const dir = dx < 0 ? -1 : 1;
+          const corr = Math.max(0, ox - slop) * push;
+          a.x -= dir * corr * (aMov / tot);
+          b.x += dir * corr * (bMov / tot);
+          a.vx -= dir * corr * vel * (aMov / tot);
+          b.vx += dir * corr * vel * (bMov / tot);
+        } else {
+          const dir = dy < 0 ? -1 : 1;
+          const corr = Math.max(0, oy - slop) * push;
+          a.y -= dir * corr * (aMov / tot);
+          b.y += dir * corr * (bMov / tot);
+          a.vy -= dir * corr * vel * (aMov / tot);
+          b.vy += dir * corr * vel * (bMov / tot);
+        }
+      }
+    }
+    return list;
+  }
+
   if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { deterministicJitter, computeLayout, resolveEdges, stepCard };
+    module.exports = { deterministicJitter, computeLayout, resolveEdges, stepCard, resolveCollisions };
   }
 
   // ----------------------------------------------------------------------
@@ -85,6 +137,21 @@
   const CARD_H = 170;
   let cards = [];          // { el, id, x, y, ... , homeX, homeY, baseRot }
   let onOpen = null;
+  let deskEl = null;       // the scroll container
+  let spacerEl = null;     // sized to contentHeight so the desk can scroll
+  let deskHeight = 0;      // current scrollable content height (px)
+
+  // Convert viewport coords (clientX/Y) into desk-content coords. The desk is an
+  // internal scroll container, so its rect stays put while content scrolls —
+  // add scrollLeft/scrollTop to reach content space.
+  function toContent(clientX, clientY) {
+    if (!deskEl) return { x: clientX, y: clientY };
+    const r = deskEl.getBoundingClientRect();
+    return {
+      x: clientX - r.left + deskEl.scrollLeft,
+      y: clientY - r.top + deskEl.scrollTop,
+    };
+  }
 
   // Project-type legend: label + fixed display order. Only categories that
   // actually appear in the data are rendered (see buildLegend).
@@ -130,6 +197,8 @@
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const positions = computeLayout(cards.length, vw, vh, CARD_W, CARD_H);
+    deskHeight = positions.contentHeight || vh;
+    if (spacerEl) spacerEl.style.height = deskHeight + 'px';
     cards.forEach((card, i) => {
       const p = positions[i];
       card.homeX = card.x = p.x;
@@ -151,24 +220,34 @@
     repelRadius: 150, repelStrength: 0.5, restitution: 0.55,
     tiltFactor: 0.5, rotStiffness: 0.08,
   };
+  // Card-vs-card collision: min center distance per axis, with a soft per-frame
+  // push so shoved cards glide apart instead of snapping (smoother, less jitter).
+  const COLLIDE = { minDX: CARD_W * 0.92, minDY: CARD_H * 0.92, push: 0.3, vel: 0.08, slop: 0.5 };
   let cursor = null;
   let rafId = null;
   let reduced = false;
 
   function bounds() {
+    const w = deskEl ? deskEl.clientWidth : window.innerWidth;
+    const h = deskHeight || window.innerHeight;
     return {
       minX: CARD_W / 2 + 8,
-      maxX: window.innerWidth - CARD_W / 2 - 8,
-      minY: CARD_H / 2 + 70,                       // below nav
-      maxY: window.innerHeight - CARD_H / 2 - 56,  // above hint
+      maxX: w - CARD_W / 2 - 8,
+      minY: CARD_H / 2 + 70,           // below nav (content coords; first screen)
+      maxY: h - CARD_H / 2 - 8,        // bottom of the scrollable content
     };
   }
 
   function frame() {
     const b = bounds();
     for (const card of cards) {
-      if (card.dragging) { applyTransform(card); continue; }
+      if (card.dragging) continue; // position owned by the drag handler
       stepCard(card, params, cursor, b, 16);
+    }
+    // A dragged card participates as an immovable obstacle, shoving the rest.
+    resolveCollisions(cards, COLLIDE);
+    for (const card of cards) {
+      if (!card.dragging) resolveEdges(card, b, params.restitution);
       applyTransform(card);
     }
     rafId = requestAnimationFrame(frame);
@@ -182,7 +261,7 @@
     if (rafId != null) { cancelAnimationFrame(rafId); rafId = null; }
   }
 
-  window.addEventListener('pointermove', (e) => { cursor = { x: e.clientX, y: e.clientY }; });
+  window.addEventListener('pointermove', (e) => { cursor = toContent(e.clientX, e.clientY); });
   window.addEventListener('pointerout', (e) => { if (!e.relatedTarget) cursor = null; });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stopLoop();
@@ -193,7 +272,13 @@
     onOpen = openCb;
     const desk = document.getElementById('desk');
     if (!desk) return;
+    deskEl = desk;
     desk.innerHTML = '';
+    // Spacer gives the scroll container its height (cards are absolute and don't).
+    spacerEl = document.createElement('div');
+    spacerEl.className = 'desk-spacer';
+    spacerEl.setAttribute('aria-hidden', 'true');
+    desk.appendChild(spacerEl);
     cards = projects.map((project, index) => {
       const el = buildCard(project, index);
       desk.appendChild(el);
@@ -205,8 +290,9 @@
       attachDrag(card);
       return card;
     });
+    // Legend lives outside the scrolling desk so it stays pinned to the corner.
     const legend = buildLegend(projects);
-    if (legend) desk.appendChild(legend);
+    if (legend) (desk.parentNode || desk).appendChild(legend);
     layoutCards();
     window.addEventListener('resize', layoutCards);
     startLoop();
@@ -225,8 +311,10 @@
       downX = lastX = e.clientX;
       downY = lastY = e.clientY;
       downT = lastMoveT = performance.now();
-      card.grabDX = card.x - e.clientX;
-      card.grabDY = card.y - e.clientY;
+      // Grab offset in desk-content coords so dragging tracks the cursor after scroll.
+      const p = toContent(e.clientX, e.clientY);
+      card.grabDX = card.x - p.x;
+      card.grabDY = card.y - p.y;
     });
 
     el.addEventListener('pointermove', (e) => {
@@ -236,8 +324,9 @@
       velX = (e.clientX - lastX) / dt * 16;
       velY = (e.clientY - lastY) / dt * 16;
       lastX = e.clientX; lastY = e.clientY; lastMoveT = now;
-      card.x = e.clientX + card.grabDX;
-      card.y = e.clientY + card.grabDY;
+      const p = toContent(e.clientX, e.clientY);
+      card.x = p.x + card.grabDX;
+      card.y = p.y + card.grabDY;
       card.rot = card.baseRot + velX * params.tiltFactor;
       applyTransform(card);
     });
