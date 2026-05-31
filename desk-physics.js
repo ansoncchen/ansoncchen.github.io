@@ -222,7 +222,7 @@
   };
   // Card-vs-card collision: min center distance per axis, with a soft per-frame
   // push so shoved cards glide apart instead of snapping (smoother, less jitter).
-  const COLLIDE = { minDX: CARD_W * 0.92, minDY: CARD_H * 0.92, push: 0.3, vel: 0.08, slop: 0.5 };
+  const COLLIDE = { minDX: CARD_W * 0.96, minDY: CARD_H * 0.96, push: 0.42, vel: 0.11, slop: 0.5 };
   let cursor = null;
   let rafId = null;
   let reduced = false;

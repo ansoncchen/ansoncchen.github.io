@@ -22,6 +22,12 @@
                 <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="2" result="n"></feTurbulence>
                 <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
             </filter>
+            <!-- Liquid morph for the About carousel. JS ramps the displacement scale (0→peak→0)
+                 and boils the turbulence seed during a transition; idle = scale 0 (no visible distortion). -->
+            <filter id="liquid-morph" x="-25%" y="-25%" width="150%" height="150%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.011" numOctaves="2" seed="3" result="lq-noise" id="liquid-turb"></feTurbulence>
+                <feDisplacementMap in="SourceGraphic" in2="lq-noise" scale="0" xChannelSelector="R" yChannelSelector="G" id="liquid-disp"></feDisplacementMap>
+            </filter>
         </defs>
     </svg>
 
@@ -66,7 +72,7 @@
     <div id="about-page" class="page">
         <div class="about-container">
             <div class="about-image-container">
-                <img src="IMG_9118.webp" alt="Sunset landscape" class="about-image" />
+                <div class="carousel" id="about-carousel" aria-hidden="true"><!-- image layers injected from CAROUSEL_IMAGES --></div>
             </div>
             <div class="about-content">
                 <div class="about-intro-wrapper">
@@ -103,6 +109,8 @@
                     </div>
                     <p class="about-hover-text" id="hover-text"></p>
                 </div>
+
+                <div class="about-quotes" id="about-quotes" aria-label="Quotes"><!-- rendered from QUOTES --></div>
             </div>
 
             <a class="about-scroll-cue" id="about-scroll-cue" href="#writing" aria-label="Scroll down to writing">

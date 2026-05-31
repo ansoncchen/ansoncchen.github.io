@@ -262,6 +262,160 @@ if (navBar) {
   });
 }
 
+// ── About-page carousels ───────────────────────────────────────────────
+// Liquid-morph image carousel + auto-fading quote carousel. Both only run
+// while the About page is the active, visible page (see watchAboutActive).
+const aboutReduceMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+// Run start()/stop() as the About page enters/leaves view (active class + tab visibility).
+function watchAboutActive(onEnter, onLeave) {
+  const about = document.getElementById('about-page');
+  if (!about) return;
+  const update = () => {
+    (about.classList.contains('active') && !document.hidden) ? onEnter() : onLeave();
+  };
+  new MutationObserver(update).observe(about, { attributes: true, attributeFilter: ['class'] });
+  document.addEventListener('visibilitychange', update);
+  update();
+}
+
+// Inline SVG gradient slide — a placeholder "photo" with no extra files.
+// Swap CAROUSEL_IMAGES entries for real image paths whenever you like.
+function gradientSlide(c1, c2, label) {
+  const svg =
+    "<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='1500'>" +
+      "<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>" +
+        "<stop offset='0' stop-color='" + c1 + "'/>" +
+        "<stop offset='1' stop-color='" + c2 + "'/>" +
+      "</linearGradient></defs>" +
+      "<rect width='1200' height='1500' fill='url(#g)'/>" +
+      "<text x='50%' y='50%' fill='rgba(255,255,255,0.28)' font-family='monospace' " +
+        "font-size='46' text-anchor='middle' dominant-baseline='middle'>" + label + "</text>" +
+    "</svg>";
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+}
+
+// First entry is the real photo; the rest are fillers to demo the morph.
+const CAROUSEL_IMAGES = [
+  { src: 'IMG_9118.webp', alt: 'Sunset landscape' },
+  { src: gradientSlide('#1b2a4a', '#5a2a4a', 'photo 2'), alt: 'Placeholder slide 2' },
+  { src: gradientSlide('#0e3b2e', '#7a5a1a', 'photo 3'), alt: 'Placeholder slide 3' },
+];
+
+// Filler quotes — overwrite with your own. `text` required; `attr` optional.
+const QUOTES = [
+  { text: 'Filler quote one — a line you find worth carrying around.', attr: 'Someone worth quoting' },
+  { text: 'Filler quote two — short enough to read in a breath, long enough to mean something.', attr: 'Another voice' },
+  { text: 'Filler quote three — placeholder words until the real ones arrive.', attr: 'A third source' },
+];
+
+(function initImageCarousel() {
+  const frame = document.getElementById('about-carousel');
+  if (!frame || CAROUSEL_IMAGES.length === 0) return;
+
+  const disp = document.getElementById('liquid-disp');   // feDisplacementMap
+  const turb = document.getElementById('liquid-turb');    // feTurbulence
+
+  // Two stacked layers that swap roles each transition.
+  const layerA = document.createElement('img');
+  const layerB = document.createElement('img');
+  [layerA, layerB].forEach((l) => { l.className = 'carousel-img'; l.decoding = 'async'; frame.appendChild(l); });
+
+  let front = layerA, back = layerB, current = 0, animating = false, timer = null;
+  front.src = CAROUSEL_IMAGES[0].src;
+  front.alt = CAROUSEL_IMAGES[0].alt;
+  front.classList.add('is-active');
+
+  const PEAK = 38;        // max displacement (px)
+  const DURATION = 900;   // ms
+
+  function finishSwap() {
+    front.classList.remove('is-active');  // hidden underneath; no visible flash
+    const tmp = front; front = back; back = tmp;
+    animating = false;
+  }
+
+  function morphTo(nextIdx) {
+    if (animating || CAROUSEL_IMAGES.length < 2) return;
+    const next = CAROUSEL_IMAGES[nextIdx];
+    back.src = next.src;
+    back.alt = next.alt;
+    back.style.zIndex = '2';   // incoming on top
+    front.style.zIndex = '1';
+    current = nextIdx;
+
+    if (aboutReduceMQ.matches || !disp || !turb) {
+      // Reduced motion (or no filter): plain crossfade, no distortion.
+      back.classList.add('is-active');
+      setTimeout(finishSwap, 450);
+      return;
+    }
+
+    animating = true;
+    frame.classList.add('is-morphing');
+    back.classList.add('is-active');        // CSS crossfades opacity over DURATION
+    const startT = performance.now();
+
+    function step(now) {
+      const t = Math.min(1, (now - startT) / DURATION);
+      const scale = Math.sin(t * Math.PI) * PEAK;   // 0 → peak → 0
+      disp.setAttribute('scale', scale.toFixed(2));
+      turb.setAttribute('seed', String((t * 24) | 0)); // boil the noise field
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        disp.setAttribute('scale', '0');
+        frame.classList.remove('is-morphing');
+        finishSwap();
+      }
+    }
+    requestAnimationFrame(step);
+  }
+
+  function start() {
+    if (timer || CAROUSEL_IMAGES.length < 2) return;
+    timer = setInterval(() => {
+      if (!document.hidden) morphTo((current + 1) % CAROUSEL_IMAGES.length);
+    }, 5000);
+  }
+  function stop() { clearInterval(timer); timer = null; }
+
+  watchAboutActive(start, stop);
+})();
+
+(function initQuoteCarousel() {
+  const root = document.getElementById('about-quotes');
+  if (!root || QUOTES.length === 0) return;
+
+  root.innerHTML =
+    QUOTES.map((q, i) =>
+      '<blockquote class="quote' + (i === 0 ? ' is-active' : '') + '">' +
+        '<p class="quote-text">' + q.text + '</p>' +
+        (q.attr ? '<cite class="quote-attr">' + q.attr + '</cite>' : '') +
+      '</blockquote>'
+    ).join('');
+
+  const quotes = Array.from(root.querySelectorAll('.quote'));
+  let qi = 0, timer = null;
+
+  function show(n) {
+    quotes[qi].classList.remove('is-active');
+    qi = (n + QUOTES.length) % QUOTES.length;
+    quotes[qi].classList.add('is-active');
+  }
+
+  function start() {
+    if (timer || QUOTES.length < 2 || aboutReduceMQ.matches) return;
+    timer = setInterval(() => { if (!document.hidden) show(qi + 1); }, 3500);
+  }
+  function stop() { clearInterval(timer); timer = null; }
+
+  root.addEventListener('mouseenter', stop);
+  root.addEventListener('mouseleave', start);
+
+  watchAboutActive(start, stop);
+})();
+
 // Project detail page functionality
 const projectContainer = document.getElementById('project-container');
 const projectDetailPage = document.getElementById('project-detail-page');

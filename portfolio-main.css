@@ -313,20 +313,91 @@ body {
   .about-image-container {
     flex: 0 0 40%;
     max-width: 600px;
-    max-height: 70vh;
+    height: 70vh;
     overflow: hidden;
     background-color: #000;
     border-radius: 8px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   }
-  
-  .about-image {
+
+  /* Liquid-morph carousel: stacked image layers that crossfade while the
+     #liquid-morph filter (toggled on via .is-morphing) distorts the blend. */
+  .carousel {
+    position: relative;
     width: 100%;
     height: 100%;
-    max-height: 70vh;
+  }
+
+  .carousel.is-morphing {
+    filter: url(#liquid-morph);
+  }
+
+  .carousel-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     object-position: center;
+    opacity: 0;
+    transition: opacity 0.9s ease;
+    will-change: opacity;
+    backface-visibility: hidden;
+  }
+
+  .carousel-img.is-active {
+    opacity: 1;
+  }
+
+  /* Quote carousel under the icon buttons */
+  .about-quotes {
+    position: relative;
+    width: 100%;
+    min-height: 5rem;
+    margin-top: 0.5rem;
+  }
+
+  .quote {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 1.25rem 0 0;
+    border-top: 1px solid var(--cat);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    pointer-events: none;
+  }
+
+  .quote.is-active {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .quote-text {
+    font-family: var(--serif);
+    font-style: italic;
+    color: var(--ink);
+    font-size: 1.12rem;
+    line-height: 1.6;
+    margin: 0 0 0.5rem;
+  }
+
+  .quote-attr {
     display: block;
+    font-family: var(--mono);
+    font-style: normal;
+    color: var(--muted);
+    font-size: 0.74rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carousel.is-morphing { filter: none; }
+    .carousel-img { transition: opacity 0.4s ease; }
+    .quote { transition: opacity 0.4s ease; transform: none; }
   }
   
   .about-content {

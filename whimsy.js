@@ -9,7 +9,7 @@
     reduced = mq.matches;
     mq.addEventListener('change', (e) => {
       reduced = e.matches;
-      if (reduced) { stopBoilTimer(); clearTimeout(hintNextTimer); hideHint(); }
+      if (reduced) { stopBoilTimer(); clearTimeout(idleTimer); hideHint(); }
       else { startBoilTimer(); if (catReady) scheduleHint(); }
     });
   } catch (_) {}
@@ -839,7 +839,7 @@
   ];
   let hintIdx = -1;
   let catReady = false;
-  let bubble = null, bubbleRaf = null, hintHideTimer = null, hintNextTimer = null;
+  let bubble = null, bubbleRaf = null, idleTimer = null, idleWired = false;
 
   function ensureBubble() {
     if (bubble) return;
@@ -881,13 +881,47 @@
     bubble.classList.add('show');
     positionBubble();
     if (bubbleRaf == null) bubbleRaf = requestAnimationFrame(followTick);
-    clearTimeout(hintHideTimer);
-    hintHideTimer = setTimeout(hideHint, 4500);
     return true;
   }
+
+  // Idle-gated hints: a bubble only surfaces after the cursor has sat still for
+  // IDLE_MS. While the cursor stays idle the hints keep cycling — each shows for
+  // VISIBLE_MS, hides, pauses GAP_MS, then a fresh one appears. Any mouse
+  // movement (or button press) hides the bubble at once and restarts the idle
+  // countdown, so a single twitch stops the cycle until things settle again.
+  const IDLE_MS = 3000;     // stillness required before the first hint
+  const VISIBLE_MS = 4500;  // how long each hint stays up
+  const GAP_MS = 1200;      // breather between hints while still idle
+  function armIdle() {
+    clearTimeout(idleTimer);
+    if (reduced || !catReady) return;
+    idleTimer = setTimeout(cycleHint, IDLE_MS);
+  }
+  function cycleHint() {
+    clearTimeout(idleTimer);
+    if (showHint()) {
+      // hold it, then hide and queue the next one (still idle = keep cycling)
+      idleTimer = setTimeout(() => {
+        hideHint();
+        idleTimer = setTimeout(cycleHint, GAP_MS);
+      }, VISIBLE_MS);
+    } else {
+      idleTimer = setTimeout(cycleHint, IDLE_MS); // term open / cat hidden — retry
+    }
+  }
+  function onPointerActivity() {
+    hideHint();   // fade away immediately on any movement
+    armIdle();    // ...and restart the countdown to the next idle reveal
+  }
   function scheduleHint() {
-    clearTimeout(hintNextTimer);
-    hintNextTimer = setTimeout(() => { scheduleHint(); showHint(); }, 9000 + Math.random() * 6000);
+    clearTimeout(idleTimer);
+    if (reduced || !catReady) return;
+    if (!idleWired) {
+      document.addEventListener('mousemove', onPointerActivity, { passive: true });
+      document.addEventListener('mousedown', onPointerActivity, { passive: true });
+      idleWired = true;
+    }
+    armIdle();    // also reveal after IDLE_MS if the cursor never moves post-load
   }
 
   // ------------------------------------------------------------------
