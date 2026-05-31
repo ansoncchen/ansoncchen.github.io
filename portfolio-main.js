@@ -145,6 +145,7 @@ navLinks.forEach(link => {
     // Wait for fade out to start, then fade in new page
     setTimeout(() => {
       targetPageElement.classList.add('active');
+      if (targetPage === 'about') targetPageElement.scrollTop = 0; // always open at the hero
       // Remove transition class after animation completes
       setTimeout(() => {
         pages.forEach(p => p.classList.remove('page-transitioning'));
@@ -195,6 +196,69 @@ if (hoverText && iconLinks.length > 0) {
         e.preventDefault();
       });
     }
+  });
+}
+
+// ── Writing / blog section ─────────────────────────────────────────────
+// Add a post by appending an object below. Fields:
+//   title   — post headline (required)
+//   date    — display date, e.g. "May 2026"
+//   excerpt — one or two lines of preview text
+//   url     — optional link (e.g. a Substack post); opens in a new tab.
+//             Omit it for a draft and the card renders non-clickable.
+const WRITING_POSTS = [
+  // TEMPORARY placeholder post — remove or replace once you publish for real.
+  { title: "Why the messy part of the data is the interesting part",
+    date: "May 2026",
+    excerpt: "A first note on what actually happens between a raw dump and a clean model — and why the gap is where most of the real questions live.",
+    url: "https://github.com/ansoncchen" },
+];
+
+(function renderWriting() {
+  const list = document.getElementById('writing-list');
+  if (!list) return;
+
+  if (!WRITING_POSTS.length) {
+    list.innerHTML =
+      '<li class="writing-post writing-post--empty">' +
+        '<span class="writing-post-date">coming soon</span>' +
+        '<h3 class="writing-post-title">Nothing published yet</h3>' +
+        '<p class="writing-post-excerpt">The first essay is in the works — check back soon.</p>' +
+      '</li>';
+    return;
+  }
+
+  list.innerHTML = WRITING_POSTS.map(p => {
+    const inner =
+      `<span class="writing-post-date">${p.date || ''}</span>` +
+      `<h3 class="writing-post-title">${p.title || ''}</h3>` +
+      `<p class="writing-post-excerpt">${p.excerpt || ''}</p>`;
+    return p.url
+      ? `<li><a class="writing-post" href="${p.url}" target="_blank" rel="noopener">${inner}</a></li>`
+      : `<li class="writing-post">${inner}</li>`;
+  }).join('');
+})();
+
+// Scroll cue smoothly drops to the writing section inside the about page.
+const aboutScrollCue = document.getElementById('about-scroll-cue');
+if (aboutScrollCue) {
+  aboutScrollCue.addEventListener('click', (e) => {
+    e.preventDefault();
+    const writing = document.getElementById('writing');
+    if (writing) writing.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+// Hide the nav once a scrollable page is scrolled down; bring it back at the top.
+const navBar = document.querySelector('.nav');
+if (navBar) {
+  const NAV_HIDE_AT = 40;
+  ['desk', 'about-page', 'project-detail-page'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('scroll', () => {
+      navBar.classList.toggle('nav--hidden', el.scrollTop > NAV_HIDE_AT);
+    }, { passive: true });
   });
 }
 

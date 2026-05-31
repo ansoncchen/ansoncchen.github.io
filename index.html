@@ -6,7 +6,7 @@
     <title>Portfolio - Project Gallery</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="portfolio-main.css">
     <script src="https://kit.fontawesome.com/99f26788e2.js" crossorigin="anonymous"></script>
 </head>
@@ -104,9 +104,23 @@
                     <p class="about-hover-text" id="hover-text"></p>
                 </div>
             </div>
+
+            <a class="about-scroll-cue" id="about-scroll-cue" href="#writing" aria-label="Scroll down to writing">
+                <span>writing</span>
+                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+            </a>
         </div>
+
+        <section id="writing" class="about-writing" aria-label="Writing">
+            <header class="writing-header">
+                <h2 class="writing-title">Writing</h2>
+            </header>
+            <ul class="writing-list" id="writing-list">
+                <!-- Rendered from WRITING_POSTS in portfolio-main.js -->
+            </ul>
+        </section>
     </div>
-    
+
     <a class="now-playing" id="now-playing" target="_blank" rel="noopener" hidden aria-live="polite" aria-label="Now playing on Last.fm">
         <span class="now-playing-art-wrap">
             <img class="now-playing-art" id="np-art" alt="" />
