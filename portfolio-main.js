@@ -208,9 +208,9 @@ if (hoverText && iconLinks.length > 0) {
 //             Omit it for a draft and the card renders non-clickable.
 const WRITING_POSTS = [
   // TEMPORARY placeholder post — remove or replace once you publish for real.
-  { title: "Why the messy part of the data is the interesting part",
+  { title: "wah wah",
     date: "May 2026",
-    excerpt: "A first note on what actually happens between a raw dump and a clean model — and why the gap is where most of the real questions live.",
+    excerpt: "wah wah wah wah wah.",
     url: "https://github.com/ansoncchen" },
 ];
 
